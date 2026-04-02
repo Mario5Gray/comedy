@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Language Human (LLH) — System Design Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #10a37f;
+            --primary-dark: #0d8a6a;
+            --secondary: #6b7280;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10a37f;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            padding: 80px 0 60px;
+            background: linear-gradient(180deg, rgba(16, 163, 127, 0.1) 0%, transparent 100%);
+            border-radius: 20px;
+            margin-bottom: 60px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 2.5rem;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #10a37f, #4facfe, #10a37f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin-bottom: 40px;
+            border: 1px solid var(--surface-light);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 80px rgba(16, 163, 127, 0.15);
+        }
+        
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        h2::before {
+            content: '✦';
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: var(--text);
+            margin: 30px 0 15px;
+        }
+        
+        p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+        
+        .chat-demo {
+            background: var(--background);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid var(--surface-light);
+        }
+        
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--surface-light);
+            margin-bottom: 20px;
+        }
+        
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .chat-info h4 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .chat-info .status {
+            color: var(--primary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 15px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .message.agent .message-avatar {
+            background: var(--gradient-1);
+        }
+        
+        .message.user .message-avatar {
+            background: var(--gradient-3);
+        }
+        
+        .message-content {
+            background: var(--surface-light);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .message.user .message-content {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .message-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .human-badge {
+            background: var(--accent);
+            color: var(--background);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .energy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .energy-card {
+            background: var(--background);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid var(--surface-light);
+            transition: all 0.3s ease;
+        }
+        
+        .energy-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .energy-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .energy-card h4 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .energy-card p {
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .energy-bar {
+            height: 8px;
+            background: var(--surface-light);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .energy-fill {
+            height: 100%;
+            background: var(--gradient-3);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(16, 163, 127, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(16, 163, 127, 0.2);
+        }
+        
+        .feature-card h4 {
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .feature-card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        
+        .feature-card li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .matching-demo {
+            background: var(--background);
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid var(--surface-light);
+        }
+        
+        .matching-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .matching-user {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .matching-arrow {
+            font-size: 2rem;
+            color: var(--primary);
+            animation: arrowPulse 1.5s infinite;
+        }
+        
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 0.5; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(5px); }
+        }
+        
+        .matching-agent {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: bounce 1s ease-in-out infinite 0.5s;
+        }
+        
+        .constraint-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: var(--background);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .constraint-table th,
+        .constraint-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+        
+        .constraint-table th {
+            background: var(--surface-light);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .constraint-table td {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        
+        .constraint-table tr:hover {
+            background: rgba(16, 163, 127, 0.05);
+        }
+        
+        .code-block {
+            background: var(--background);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid var(--surface-light);
+            overflow-x: auto;
+        }
+        
+        .code-block pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        
+        .code-block .keyword {
+            color: #c678dd;
+        }
+        
+        .code-block .string {
+            color: #98c379;
+        }
+        
+        .code-block .function {
+            color: #61afef;
+        }
+        
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+        
+        .quote {
+            font-size: 1.4rem;
+            font-style: italic;
+            text-align: center;
+            padding: 50px 40px;
+            color: var(--primary);
+            border-top: 1px solid var(--surface-light);
+            border-bottom: 1px solid var(--surface-light);
+            margin: 50px 0;
+            line-height: 1.6;
+            background: linear-gradient(135deg, rgba(16, 163, 127, 0.05) 0%, rgba(79, 172, 254, 0.05) 100%);
+            border-radius: 15px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 60px 0 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--surface-light);
+            margin-top: 60px;
+        }
+        
+        .footer-heart {
+            color: var(--danger);
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .badge-accent {
+            background: var(--accent);
+            color: var(--background);
+        }
+        
+        .badge-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            .section { padding: 35px 25px; }
+            .matching-animation { gap: 15px; }
+            .matching-user, .matching-agent { width: 60px; height: 60px; font-size: 1.5rem; }
+        }
+        
+        .floating-particle {
+            position: fixed;
+            background: radial-gradient(circle, rgba(16, 163, 127, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 30px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--surface-light);
+            border-radius: 3px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 3px solid var(--background);
+        }
+        
+        .timeline-item h4 {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .timeline-item p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">🧠</div>
+            <h1>Large Language Human</h1>
+            <p class="subtitle">A ChatGPT-style interface powered entirely by humans. Every user is an agent. Every response is real.</p>
+            <div style="margin-top: 30px;">
+                <span class="badge badge-primary">Human-Powered</span>
+                <span class="badge badge-accent">Energy-Budgeted</span>
+                <span class="badge badge-secondary">Omegle-Style Matching</span>
+            </div>
+        </header>
+        
+        <div class="quote">
+            "LLH isn't about replacing AI with humans.<br>
+            It's about creating a sustainable space where human attention is treated as the precious resource it is."
+        </div>
+        
+        <section class="section">
+            <h2>Core Concept</h2>
+            <p><strong>Large Language Human (LLH)</strong> presents itself as an ordinary ChatGPT-style chat application—but instead of an LLM, it's powered by real humans.</p>
+            
+            <p>Every participant has <strong>2 roles</strong>:</p>
+            <div class="feature-grid" style="margin-top: 20px;">
+                <div class="feature-card">
+                    <h4>👤 User Mode</h4>
+                    <p>Submit requests, ask questions, get help from other humans in the network.</p>
+                    <ul>
+                        <li>Standard chat interface</li>
+                        <li>Request any supported task</li>
+                        <li>Rate helpful responses</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🤝 Agent Mode</h4>
+                    <p>Respond to requests from other users, earn reputation, contribute to the community.</p>
+                    <ul>
+                        <li>Protected by energy budgets</li>
+                        <li>Can decline any request</li>
+                        <li>Set personal boundaries</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Live Chat Demo</h2>
+            <p>Experience what LLH looks like in action. Notice the <span class="human-badge">HUMAN</span> badge on every response.</p>
+            
+            <div class="chat-demo">
+                <div class="chat-header">
+                    <div class="chat-avatar">🧠</div>
+                    <div class="chat-info">
+                        <h4>LLH Assistant</h4>
+                        <div class="status">
+                            <span class="status-dot"></span>
+                            <span>Connected to human agent • Alex (Portland, OR)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-messages">
+                    <div class="message user">
+                        <div class="message-avatar">👤</div>
+                        <div>
+                            <div class="message-content">
+                                What's the weather like today? Should I wear a jacket?
+                            </div>
+                            <div class="message-meta">
+                                <span>2:34 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message agent">
+                        <div class="message-avatar">👩</div>
+                        <div>
+                            <div class="message-content">
+                                Hey! I'm in Portland too. It's about 58°F and overcast right now. I'd definitely bring a light jacket—might drizzle later this afternoon. ☔
+                            </div>
+                            <div class="message-meta">
+                                <span class="human-badge">HUMAN AGENT</span>
+                                <span>2:36 PM</span>
+                                <span> Energy: 2/15 min (Action Budget)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message user">
+                        <div class="message-avatar">👤</div>
+                        <div>
+                            <div class="message-content">
+                                Thanks! Also, pasta or tacos for dinner?
+                            </div>
+                            <div class="message-meta">
+                                <span>2:37 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message agent">
+                        <div class="message-avatar">👩</div>
+                        <div>
+                            <div class="message-content">
+                                Ooh tough choice! 🤔 Given the rainy weather, I'd say pasta—something warm and cozy. Maybe a carbonara? But if you're craving spice, tacos never disappoint!
+                            </div>
+                            <div class="message-meta">
+                                <span class="human-badge">HUMAN AGENT</span>
+                                <span>2:38 PM</span>
+                                <span>⚡ Energy: 4/45 min (Conversational Budget)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Omegle-Style Human Matching</h2>
+            <p>Like Omegle, but text-only and purposeful. Users are matched with available agents based on skills, availability, and energy budgets.</p>
+            
+            <div class="matching-demo">
+                <h3 style="color: var(--text); margin-bottom: 20px;">Finding You a Human Agent...</h3>
+                <div class="matching-animation">
+                    <div class="matching-user">👤</div>
+                    <div class="matching-arrow">⟶</div>
+                    <div class="matching-agent">👩</div>
+                </div>
+                <p style="color: var(--text-muted);">Matching based on: Skill Fit • Energy Availability • Response History • Timezone</p>
+                <div style="margin-top: 20px;">
+                    <span class="badge badge-primary">Avg Match Time: 12 seconds</span>
+                    <span class="badge badge-accent">Active Agents: 847</span>
+                </div>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🎯 Skill-Based Routing</h4>
+                    <p>Requests are routed to agents who have opted into relevant categories.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ Energy-Aware Matching</h4>
+                    <p>Agents with available budget are prioritized to prevent burnout.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🌍 Geographic Awareness</h4>
+                    <p>Location-based requests match with agents in relevant timezones.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 Load Balancing</h4>
+                    <p>No agent gets overwhelmed; requests distribute evenly across the network.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Energy Budget Framework</h2>
+            <p>To keep humans from spending more energy than reasonable, we define 4 categories with strict constraints.</p>
+            
+            <div class="energy-grid">
+                <div class="energy-card">
+                    <div class="energy-icon">💬</div>
+                    <h4>Category A: Conversational</h4>
+                    <p>Typing conversational prose at a computer</p>
+                    <div class="energy-bar">
+                        <div class="energy-fill" style="width: 75%;"></div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem;">45 min/day • 500 words max • 3 concurrent threads</p>
+                </div>
+                
+                <div class="energy-card">
+                    <div class="energy-icon">💻</div>
+                    <h4>Category B: Code Review</h4>
+                    <p>Examining programs, pair programming</p>
+                    <div class="energy-bar">
+                        <div class="energy-fill" style="width: 50%;"></div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem;">25 min/day • 100 lines max • 20 new lines</p>
+                </div>
+                
+                <div class="energy-card">
+                    <div class="energy-icon">🎨</div>
+                    <h4>Category C: Drawing</h4>
+                    <p>Creating simple images and sketches</p>
+                    <div class="energy-bar">
+                        <div class="energy-fill" style="width: 60%;"></div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem;">20 min/day • 800×600 max • 2 revisions</p>
+                </div>
+                
+                <div class="energy-card">
+                    <div class="energy-icon">🌍</div>
+                    <h4>Category D: Actions</h4>
+                    <p>Real-world tasks (weather, food, orders)</p>
+                    <div class="energy-bar">
+                        <div class="energy-fill" style="width: 40%;"></div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem;">15 min/day • 3 min research • Pre-auth required</p>
+                </div>
+            </div>
+            
+            <h3>Constraint Enforcement Table</h3>
+            <table class="constraint-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Max Time</th>
+                        <th>Max Output</th>
+                        <th>Auto-Decline Triggers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conversational</strong></td>
+                        <td>45 min/day</td>
+                        <td>500 words per response</td>
+                        <td>Legal/medical advice, crisis support, repetitive tasks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Code Review</strong></td>
+                        <td>25 min/session</td>
+                        <td>100 lines, 20 new lines</td>
+                        <td>Full app development, security auditing, obfuscated code</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Drawing</strong></td>
+                        <td>10 min/image</td>
+                        <td>800×600px, 3 complexity layers</td>
+                        <td>Photorealism, 15+ elements, professional designs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Actions</strong></td>
+                        <td>3 min/action</td>
+                        <td>Single atomic task</td>
+                        <td>Unpaid transactions, impossible requests, out-of-scope</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="section">
+            <h2>The "No" Protocol</h2>
+            <p>Agents can decline any request with zero penalty. This is fundamental to preventing exploitation.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🛡️ Valid Decline Reasons</h4>
+                    <ul>
+                        <li>Budget exhausted (daily limit reached)</li>
+                        <li>Scope too large (exceeds constraints)</li>
+                        <li>Out of scope (not in agent's skills)</li>
+                        <li>Personal boundary (no explanation required)</li>
+                        <li>Safety concern (harm, illegality, liability)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>💡 Auto-Suggestions</h4>
+                    <ul>
+                        <li>System generates alternatives on decline</li>
+                        <li>User sees "Try asking..." suggestions</li>
+                        <li>Option to find different agent</li>
+                        <li>Schedule for later when budget resets</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Anonymous Analytics</h4>
+                    <ul>
+                        <li>Decline reasons logged (anonymized)</li>
+                        <li>System learns to route better</li>
+                        <li>Constraints evolve based on data</li>
+                        <li>No penalty for agent</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">decline_request</span>(request, reason: DeclineReason):
+    <span class="comment"># Log for system learning (anonymized)</span>
+    analytics.<span class="function">record_decline</span>(reason, request_category)
+    
+    <span class="comment"># Auto-suggest alternatives</span>
+    alternatives = suggestion_engine.<span class="function">generate</span>(request, exclude_reason=reason)
+    
+    <span class="comment"># Return graceful response</span>
+    <span class="keyword">return</span> <span class="function">Response</span>(
+        status=<span class="string">"DECLINED"</span>,
+        message=<span class="string">f"I can't help with that right now ({reason.label}). "</span>
+                <span class="string">f"Try: {alternatives[:3]}"</span>,
+        can_retry_after=timedelta(minutes=<span class="number">30</span>) <span class="keyword">if</span> reason == <span class="string">"BUDGET_EXHAUSTED"</span> <span class="keyword">else</span> <span class="keyword">None</span>
+    )</pre>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Implementation Roadmap</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Phase 1: Core Protocol</h4>
+                    <p>Energy Ledger, basic budget enforcement, "No" protocol</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Phase 2: Category Handlers</h4>
+                    <p>Conversational validator, code review sandbox, drawing canvas, action router</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Phase 3: Fairness Engine</h4>
+                    <p>Load balancing, skill matching, optional reputation system</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Phase 4: Agent Tools</h4>
+                    <p>Effort estimation helpers, quick-response templates, one-click decline</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Phase 5: Analytics & Learning</h4>
+                    <p>Anonymized decline analysis, budget optimization, community guidelines</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Ethical Guardrails</h2>
+            <div class="feature-grid">
+                <div class="feature-card" style="border-color: var(--success);">
+                    <h4>✅ Always</h4>
+                    <ul>
+                        <li>Explicit consent per category</li>
+                        <li>Agent can withdraw anytime</li>
+                        <li>Privacy first (identities protected)</li>
+                        <li>Transparent compensation (if monetized)</li>
+                        <li>Exit strategy (delete data, leave without penalty)</li>
+                    </ul>
+                </div>
+                <div class="feature-card" style="border-color: var(--danger);">
+                    <h4>❌ Never</h4>
+                    <ul>
+                        <li>Pressure agents to respond faster</li>
+                        <li>Hide human nature from users</li>
+                        <li>Allow harmful or illegal requests</li>
+                        <li>Use labor to train AI without consent</li>
+                        <li>Gamification that encourages overwork</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <div class="quote">
+            "By designing constraints first, we ensure the system serves humans—<br>not the other way around."
+        </div>
+        
+        <footer class="footer">
+            <div class="footer-heart">❤</div>
+            <p>Large Language Human — A sustainable, ethical human-computing hybrid</p>
+            <p style="margin-top: 15px; color: #505050;">This document is a living framework. Constraints evolve based on agent feedback.</p>
+            <p style="margin-top: 10px; color: #404040;">Version 1.0 • April 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const container = document.body;
+            for (let i = 0; i < 6; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'floating-particle';
+                particle.style.width = Math.random() * 100 + 50 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particle.style.animationDuration = Math.random() * 10 + 10 + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        // Create star field
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 80; i++) {
+                const star = document.createElement('div');
+                star.style.position = 'absolute';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.background = 'white';
+                star.style.borderRadius = '50%';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.opacity = Math.random() * 0.5 + 0.2;
+                star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Animate energy bars on scroll
+        function animateEnergyBars() {
+            const bars = document.querySelectorAll('.energy-fill');
+            bars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        }
+        
+        createParticles();
+        createStars();
+        setTimeout(animateEnergyBars, 1000);
+    </script>
+</body>
+</html>
