@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perceptual Architectures: Art That Reasons With You</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #00cec9;
+            --accent: #fd79a8;
+            --dark: #2d3436;
+            --light: #dfe6e9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: 
+                radial-gradient(circle at 20% 50%, var(--primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--secondary) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--accent) 0%, transparent 50%);
+            animation: bgPulse 10s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: scale(1); opacity: 0.1; }
+            50% { transform: scale(1.1); opacity: 0.15; }
+        }
+
+        header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: titleFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--light);
+            opacity: 0.8;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--secondary);
+            border-left: 5px solid var(--primary);
+            padding-left: 1rem;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--accent);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(108, 92, 231, 0.3);
+        }
+
+        .demo-visual {
+            height: 200px;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Anamorphic Demo */
+        .anamorphic-canvas {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .distorted-shape {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            transform: rotateX(60deg) scaleY(0.5);
+            transition: transform 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .demo-card:hover .distorted-shape {
+            transform: rotateX(0deg) scaleY(1);
+        }
+
+        /* Op Art Demo */
+        .op-art {
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
+            animation: opMove 0.5s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .demo-card:hover .op-art {
+            animation-play-state: running;
+        }
+
+        @keyframes opMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+
+        /* Feedback Wave Demo */
+        .feedback-wave {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(to top, var(--primary), transparent);
+            opacity: 0.6;
+            animation: waveMove 3s ease-in-out infinite;
+        }
+
+        .wave:nth-child(2) {
+            animation-delay: -1s;
+            opacity: 0.4;
+            background: linear-gradient(to top, var(--secondary), transparent);
+        }
+
+        .wave:nth-child(3) {
+            animation-delay: -2s;
+            opacity: 0.3;
+            background: linear-gradient(to top, var(--accent), transparent);
+        }
+
+        @keyframes waveMove {
+            0%, 100% { transform: translateX(0) scaleY(1); }
+            50% { transform: translateX(-25%) scaleY(1.2); }
+        }
+
+        /* Interactive Elements */
+        .interactive-zone {
+            background: rgba(108, 92, 231, 0.1);
+            border: 2px dashed var(--primary);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive-zone::before {
+            content: '👆 Move your mouse here';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--secondary);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .particle.active {
+            opacity: 1;
+            animation: particleFloat 2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
+
+        /* Illusion Gallery */
+        .illusion-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .illusion-item {
+            position: relative;
+            height: 300px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .illusion-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .illusion-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .illusion-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 2rem 1rem 1rem;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .illusion-item:hover .illusion-overlay {
+            transform: translateY(0);
+        }
+
+        /* Code Example Box */
+        .code-box {
+            background: #1e1e2e;
+            border-left: 4px solid var(--secondary);
+            padding: 1.5rem;
+            border-radius: 0 10px 10px 0;
+            margin: 2rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-box code {
+            color: #a6accd;
+        }
+
+        .code-box .keyword { color: var(--primary); }
+        .code-box .function { color: var(--secondary); }
+        .code-box .string { color: var(--accent); }
+
+        /* Principle Cards */
+        .principle-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .principle-item {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(0, 206, 201, 0.2));
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .principle-item h4 {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            margin-top: 4rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            margin: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            section {
+                padding: 3rem 1rem;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-circle {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="loader" id="loader">
+        <div class="loader-circle"></div>
+    </div>
+
+    <header>
+        <h1>Perceptual Architectures</h1>
+        <p class="subtitle">Art That Reasons With You: Exploring Interactive Illusions, Feedback Systems, and Perspective-Dependent Realities</p>
+        <div class="scroll-indicator">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </div>
+    </header>
+
+    <section id="introduction">
+        <h2>The New Visual Language</h2>
+        <p style="font-size: 1.2rem; line-height: 1.8; margin-bottom: 2rem;">
+            Traditional art speaks <em>to</em> the viewer. Interactive, perception-based art speaks <em>with</em> the viewer. 
+            It creates a dialogue where the observer becomes the observed, where looking changes what is seen, 
+            and where the artwork itself becomes a living system that responds, adapts, and evolves.
+        </p>
+        
+        <div class="interactive-zone" id="interactiveZone">
+            <h3 style="position: relative; z-index: 1;">Experience Reactive Perception</h3>
+            <p style="position: relative; z-index: 1; margin-top: 1rem;">Move your cursor to create particles that respond to your presence</p>
+        </div>
+    </section>
+
+    <section id="perspective">
+        <h2>1. Perspective-Dependent Realities</h2>
+        <p>Art that exists in multiple states simultaneously, revealing different truths based on the viewer's position.</p>
+        
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3>Anamorphic Illusions</h3>
+                <div class="demo-visual">
+                    <div class="anamorphic-canvas">
+                        <div class="distorted-shape"></div>
+                    </div>
+                </div>
+                <p><strong>Hover to reveal:</strong> Distorted shapes that resolve into coherent forms from specific viewpoints. Like street art that appears 3D only from one angle.</p>
+                <p><em>Examples: Julian Beever's chalk art, Hans Holbein's "The Ambassadors" skull</em></p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Forced Perspective</h3>
+                <div class="demo-visual" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                    <div style="font-size: 4rem;">🏛️</div>
+                </div>
+                <p>Architectural illusions that manipulate scale and depth. The Ames Room makes people appear to shrink or grow as they walk across.</p>
+                <p><em>Applications: Museum installations, film sets (Lord of the Rings hobbits)</em></p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Hollow Face Illusion</h3>
+                <div class="demo-visual" style="display: flex; align-items: center; justify-content: center; background: #2d3436;">
+                    <div style="width: 120px; height: 120px; background: radial-gradient(circle at 30% 30%, #ddd, #666); border-radius: 50%; box-shadow: inset -20px -20px 40px rgba(0,0,0,0.5); animation: faceFollow 4s ease-in-out infinite;"></div>
+                </div>
+                <p>Concave masks that appear convex due to the brain's face-processing bias. The eyes seem to follow you.</p>
+                <p><em>Used in: Haunted attractions, perception research</em></p>
+            </div>
+        </div>
+
+        <div class="code-box">
+            <code>
+<span class="keyword">function</span> <span class="function">createAnamorphosis</span>(originalImage, viewpoint) {
+    <span class="keyword">const</span> distortion = calculatePerspective(viewpoint);
+    <span class="keyword">return</span> applyTransformation(originalImage, distortion);
+}
+
+<span class="comment">// The artwork exists in superposition</span>
+<span class="comment">// until observed from a specific angle</span>
+            </code>
+        </div>
+    </section>
+
+    <section id="feedback">
+        <h2>2. Feedback-Responsive Systems</h2>
+        <p>Artworks that sense and respond to the viewer's presence, physiology, or behavior in real-time.</p>
+
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3>Biofeedback Visualization</h3>
+                <div class="demo-visual">
+                    <div class="feedback-wave">
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                    </div>
+                </div>
+                <p>Visualizations that respond to heart rate, brainwaves, or skin conductance. Your body becomes the brush.</p>
+                <p><em>Tools: EEG headsets, pulse sensors, GSR monitors</em></p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Eye-Tracking Art</h3>
+                <div class="demo-visual" style="background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="width: 200px; height: 200px; border: 3px solid var(--accent); border-radius: 50%; position: relative;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 30px var(--accent);"></div>
+                    </div>
+                </div>
+                <p>The painting changes based on where you look. Gaze-contingent displays reveal hidden layers.</p>
+                <p><em>Example: Art that blurs peripheral vision, sharpens at focal point</em></p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Motion Tracking</h3>
+                <div class="demo-visual" style="background: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0, 206, 201, 0.1) 20px, rgba(0, 206, 201, 0.1) 40px);">
+                    <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; background: var(--secondary); border-radius: 50%; box-shadow: 0 0 40px var(--secondary); animation: shadowTrail 2s ease-out infinite;"></div>
+                </div>
+                <p>Leave traces as you move. Kinect and depth sensors create digital echoes of physical presence.</p>
+                <p><em>Examples: teamLab installations, reactive projection mapping</em></p>
+            </div>
+        </div>
+
+        <div class="interactive-zone" id="biofeedbackZone" style="min-height: 300px;">
+            <h3>Simulated Biofeedback</h3>
+            <p>Click and hold to simulate increased heart rate - watch the waves intensify</p>
+            <div id="heartRateDisplay" style="margin-top: 2rem; font-size: 2rem; font-weight: bold; color: var(--accent);">Heart Rate: 72 BPM</div>
+            <div id="waveContainer" style="margin-top: 2rem; height: 100px; position: relative; overflow: hidden;"></div>
+        </div>
+    </section>
+
+    <section id="optical">
+        <h2>3. Optical & Perceptual Illusions</h2>
+        <p>Exploiting the brain's visual processing to create impossible, moving, or ambiguous experiences.</p>
+
+        <div class="illusion-showcase">
+            <div class="illusion-item">
+                <div style="width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #000 0px, #000 10px, #fff 10px, #fff 20px);"></div>
+                <div class="illusion-overlay">
+                    <h4>Op Art Movement</h4>
+                    <p>Geometric patterns that create illusory motion through high-contrast repetition.</p>
+                </div>
+            </div>
+
+            <div class="illusion-item">
+                <div style="width: 100%; height: 100%; background: conic-gradient(from 0deg, #ff0000, #00ff00, #0000ff, #ff0000); animation: rotate 4s linear infinite;"></div>
+                <div class="illusion-overlay">
+                    <h4>Color Wheel Illusion</h4>
+                    <p>Spinning colors create afterimages and complementary color perceptions.</p>
+                </div>
+            </div>
+
+            <div class="illusion-item">
+                <div style="width: 100%; height: 100%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 20px;">
+                    <!-- Grid of circles creating Hermann Grid illusion -->
+                </div>
+                <div class="illusion-overlay">
+                    <h4>Hermann Grid</h4>
+                    <p>Ghost blobs appear at intersections due to lateral inhibition in retinal processing.</p>
+                </div>
+            </div>
+
+            <div class="illusion-item">
+                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 6rem;">🌀</div>
+                <div class="illusion-overlay">
+                    <h4>Impossible Objects</h4>
+                    <p>Penrose triangles, Escher stairs - geometries that cannot exist in 3D space.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card" style="margin-top: 2rem;">
+            <h3>Live Op Art Generator</h3>
+            <div class="demo-visual" style="height: 300px;">
+                <canvas id="opArtCanvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="cta-button" onclick="changeOpArtPattern('spiral')">Spiral</button>
+                <button class="cta-button" onclick="changeOpArtPattern('grid')">Grid</button>
+                <button class="cta-button" onclick="changeOpArtPattern('concentric')">Concentric</button>
+                <button class="cta-button" onclick="toggleOpAnimation()">Toggle Animation</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="principles">
+        <h2>Design Principles for Perceptual Art</h2>
+        
+        <div class="principle-list">
+            <div class="principle-item">
+                <h4>🎯 Ambiguity</h4>
+                <p>Leave room for interpretation. Multiple valid readings create engagement and personal meaning.</p>
+            </div>
+
+            <div class="principle-item">
+                <h4>🎮 Agency</h4>
+                <p>Give viewers meaningful influence. Their actions should have visible, understandable consequences.</p>
+            </div>
+
+            <div class="principle-item">
+                <h4>💎 Revelation</h4>
+                <p>Reward sustained attention. Layer discoveries so repeated viewings yield new insights.</p>
+            </div>
+
+            <div class="principle-item">
+                <h4>👁️ Embodiment</h4>
+                <p>Engage the whole body, not just eyes. Use spatial audio, haptics, proprioception.</p>
+            </div>
+
+            <div class="principle-item">
+                <h4>🌱 Emergence</h4>
+                <p>Simple rules creating complex behaviors. Let the system surprise both artist and viewer.</p>
+            </div>
+
+            <div class="principle-item">
+                <h4>💾 Memory</h4>
+                <p>The artwork remembers and evolves. Each interaction leaves a trace for the next viewer.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="tools">
+        <h2>Technical Toolkit</h2>
+        
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3>Sensors & Input</h3>
+                <ul style="list-style: none; line-height: 2;">
+                    <li>📹 Computer Vision (OpenCV, MediaPipe)</li>
+                    <li>🧠 EEG/Brain-Computer Interfaces</li>
+                    <li>📡 LiDAR & Depth Sensors</li>
+                    <li>❤️ Biometric Sensors (pulse, GSR)</li>
+                    <li>️ Eye Trackers (Tobii, WebGazer)</li>
+                    <li>🎤 Microphones & Audio Analysis</li>
+                </ul>
+            </div>
+
+            <div class="demo-card">
+                <h3>Software Frameworks</h3>
+                <ul style="list-style: none; line-height: 2;">
+                    <li>🎨 TouchDesigner (visual programming)</li>
+                    <li>🎯 Processing & p5.js (creative coding)</li>
+                    <li>🔧 openFrameworks (C++ toolkit)</li>
+                    <li>🎵 Pure Data / Max/MSP (audio/visual)</li>
+                    <li>🌐 Three.js / WebGL (3D web)</li>
+                    <li>🤖 TensorFlow.js (ML in browser)</li>
+                </ul>
+            </div>
+
+            <div class="demo-card">
+                <h3>Output & Display</h3>
+                <ul style="list-style: none; line-height: 2;">
+                    <li>📽️ Projection Mapping</li>
+                    <li>💡 LED Matrices & Strips</li>
+                    <li>🕶️ AR/VR Headsets</li>
+                    <li>🖼️ E-Ink & OLED Displays</li>
+                    <li>🔊 Spatial Audio Systems</li>
+                    <li>🤖 Kinetic Sculptures</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-box">
+            <code>
+<span class="comment">// Example: Simple gaze-responsive artwork</span>
+<span class="keyword">import</span> { <span class="function">WebGazer</span> } <span class="keyword">from</span> <span class="string">'webgazer'</span>;
+
+<span class="keyword">async function</span> <span class="function">initGazeArt</span>() {
+    <span class="keyword">const</span> gazer = <span class="keyword">await</span> WebGazer.begin();
+    
+    gazer.setGazeListener((x, y) => {
+        <span class="comment">// Artwork responds to where you look</span>
+        <span class="function">revealHiddenLayer</span>(x, y);
+        <span class="function">adjustColorTemperature</span>(calculateDistance(x, y));
+    });
+}
+
+<span class="comment">// The painting watches back</span>
+            </code>
+        </div>
+    </section>
+
+    <section id="examples">
+        <h2>Notable Works & Artists</h2>
+        
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3>teamLab</h3>
+                <p>Borderless digital installations where flowers bloom under your feet and waterfalls part as you walk through.</p>
+                <p><strong>Technique:</strong> Real-time motion tracking, projection mapping</p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Rafael Lozano-Hemmer</h3>
+                <p>"Pulse Series" - installations where your heartbeat controls lights, sound, and robotic mechanisms.</p>
+                <p><strong>Technique:</strong> Biometric sensors, robotic actuators</p>
+            </div>
+
+            <div class="demo-card">
+                <h3>James Turrell</h3>
+                <p>Light and space installations that challenge perception of depth, color, and materiality.</p>
+                <p><strong>Technique:</strong> Controlled lighting, architectural intervention</p>
+            </div>
+
+            <div class="demo-card">
+                <h3>Refik Anadol</h3>
+                <p>Data sculptures and machine learning hallucinations that visualize collective memory.</p>
+                <p><strong>Technique:</strong> AI/ML, big data visualization</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="create">
+        <h2>Start Creating</h2>
+        <p style="font-size: 1.2rem; text-align: center; margin-bottom: 2rem;">
+            The tools are accessible. The possibilities are infinite. Begin with curiosity.
+        </p>
+        
+        <div style="text-align: center;">
+            <button class="cta-button" onclick="document.getElementById('interactiveZone').scrollIntoView({behavior: 'smooth'})">
+                Try the Interactive Demo
+            </button>
+            <button class="cta-button" onclick="document.getElementById('tools').scrollIntoView({behavior: 'smooth'})">
+                Explore the Toolkit
+            </button>
+        </div>
+
+        <div class="code-box" style="margin-top: 3rem;">
+            <code>
+<span class="comment">// Your first perceptual artwork - 5 lines of code</span>
+<span class="keyword">const</span> canvas = document.querySelector(<span class="string">'canvas'</span>);
+canvas.addEventListener(<span class="string">'mousemove'</span>, (e) => {
+    <span class="keyword">const</span> ctx = canvas.getContext(<span class="string">'2d'</span>);
+    ctx.fillStyle = <span class="string">`hsl(${e.clientX / 2}, 70%, 60%)`</span>;
+    ctx.fillRect(e.clientX, e.clientY, 50, 50);
+});
+
+<span class="comment">// You just made art that responds to presence.</span>
+<span class="comment">// Welcome to the conversation.</span>
+            </code>
+        </div>
+    </section>
+
+    <footer>
+        <h2 style="color: var(--secondary); margin-bottom: 1rem;">Continue the Dialogue</h2>
+        <p style="margin-bottom: 2rem;">
+            Perceptual art is not a destination but a conversation.<br>
+            Every viewer completes the circuit. Every gaze activates the system.
+        </p>
+        <p style="opacity: 0.7; font-size: 0.9rem;">
+            Created with curiosity • 2024<br>
+            <em>"The observer is the observed"</em>
+        </p>
+    </footer>
+
+    <script>
+        // Remove loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 500);
+        });
+
+        // Interactive zone particles
+        const interactiveZone = document.getElementById('interactiveZone');
+        
+        interactiveZone.addEventListener('mousemove', (e) => {
+            const rect = interactiveZone.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            for (let i = 0; i < 5; i++) {
+                createParticle(x, y);
+            }
+        });
+
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 50 + Math.random() * 100;
+            particle.style.setProperty('--tx', Math.cos(angle) * velocity + 'px');
+            particle.style.setProperty('--ty', Math.sin(angle) * velocity + 'px');
+            
+            interactiveZone.appendChild(particle);
+            
+            setTimeout(() => particle.classList.add('active'), 10);
+            setTimeout(() => particle.remove(), 2000);
+        }
+
+        // Biofeedback simulation
+        const biofeedbackZone = document.getElementById('biofeedbackZone');
+        const heartRateDisplay = document.getElementById('heartRateDisplay');
+        const waveContainer = document.getElementById('waveContainer');
+        let heartRate = 72;
+        let isPressed = false;
+
+        biofeedbackZone.addEventListener('mousedown', () => isPressed = true);
+        biofeedbackZone.addEventListener('mouseup', () => isPressed = false);
+        biofeedbackZone.addEventListener('mouseleave', () => isPressed = false);
+        biofeedbackZone.addEventListener('touchstart', (e) => { e.preventDefault(); isPressed = true; });
+        biofeedbackZone.addEventListener('touchend', () => isPressed = false);
+
+        setInterval(() => {
+            if (isPressed && heartRate < 150) {
+                heartRate += 2;
+            } else if (!isPressed && heartRate > 72) {
+                heartRate -= 1;
+            }
+            
+            heartRateDisplay.textContent = `Heart Rate: ${heartRate} BPM`;
+            
+            // Update wave animation speed
+            const waves = waveContainer.querySelectorAll('.wave');
+            waves.forEach(wave => {
+                wave.style.animationDuration = (3 - (heartRate - 72) / 50) + 's';
+            });
+        }, 100);
+
+        // Create waves for biofeedback
+        for (let i = 0; i < 3; i++) {
+            const wave = document.createElement('div');
+            wave.className = 'wave';
+            wave.style.animationDelay = `-${i}s`;
+            waveContainer.appendChild(wave);
+        }
+
+        // Op Art Canvas
+        const canvas = document.getElementById('opArtCanvas');
+        const ctx = canvas.getContext('2d');
+        let opPattern = 'spiral';
+        let isAnimating = true;
+        let time = 0;
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawOpArt() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            
+            if (opPattern === 'spiral') {
+                drawSpiral();
+            } else if (opPattern === 'grid') {
+                drawGrid();
+            } else if (opPattern === 'concentric') {
+                drawConcentric();
+            }
+            
+            if (isAnimating) {
+                time += 0.02;
+            }
+            
+            requestAnimationFrame(drawOpArt);
+        }
+
+        function drawSpiral() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const arms = 8;
+            
+            for (let i = 0; i < arms; i++) {
+                ctx.beginPath();
+                for (let r = 0; r < 300; r += 5) {
+                    const angle = (r * 0.1) + (i * Math.PI * 2 / arms) + time;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+                    
+                    if (r === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function drawGrid() {
+            const spacing = 40;
+            const offset = Math.sin(time) * 20;
+            
+            for (let x = 0; x < canvas.width; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x + offset, 0);
+                ctx.lineTo(x - offset, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(0, y + offset);
+                ctx.lineTo(canvas.width, y - offset);
+                ctx.stroke();
+            }
+        }
+
+        function drawConcentric() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const rings = 20;
+            
+            for (let i = 0; i < rings; i++) {
+                const radius = (i * 20) + (Math.sin(time + i * 0.5) * 10);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function changeOpArtPattern(pattern) {
+            opPattern = pattern;
+        }
+
+        function toggleOpAnimation() {
+            isAnimating = !isAnimating;
+        }
+
+        drawOpArt();
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards
+        document.querySelectorAll('.demo-card, .principle-item').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s, transform 0.6s';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

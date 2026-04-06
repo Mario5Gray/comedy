@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTENTION: The Card Game - Interactive Learning</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .formula {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .formula span {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .slot {
+            background: #0f172a;
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .slot:hover {
+            border-color: var(--primary);
+            background: #1e293b;
+        }
+
+        .slot.active {
+            border-color: var(--success);
+            background: #166534;
+        }
+
+        .slot .card-display {
+            width: 80px;
+            height: 100px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .symbol {
+            font-size: 2rem;
+            margin: 5px 0;
+        }
+
+        .symbol.red { color: #ef4444; }
+        .symbol.blue { color: #3b82f6; }
+        .symbol.green { color: #22c55e; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+        }
+
+        .hand {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 8px;
+        }
+
+        .hand-card {
+            width: 70px;
+            height: 90px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .hand-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .hand-card.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 15px var(--success);
+        }
+
+        .attention-bar {
+            height: 30px;
+            background: #0f172a;
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .attention-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.5s ease;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-box .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .log {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .log-entry.success { color: var(--success); }
+        .log-entry.info { color: var(--primary); }
+        .log-entry.warning { color: var(--warning); }
+
+        .nn-analogy {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .nn-analogy h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .progress-ring .bg {
+            stroke: #334155;
+        }
+
+        .progress-ring .progress {
+            stroke: var(--success);
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .tokens {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .token {
+            width: 30px;
+            height: 30px;
+            background: var(--warning);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            border-top: 1px solid #334155;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-board {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎴 ATTENTION: The Card Game</h1>
+            <p>Interactive Learning — Understand Neural Network Attention Through Play</p>
+        </header>
+
+        <div class="grid">
+            <!-- Game Board -->
+            <div class="card">
+                <h2>🎮 Game Board</h2>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="value" id="score">0</div>
+                        <div class="label">Your Score</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="round">1</div>
+                        <div class="label">Round</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="tokens">5</div>
+                        <div class="label">Attention Tokens</div>
+                    </div>
+                </div>
+
+                <div class="game-board" id="gameBoard">
+                    <div class="slot" data-index="0">
+                        <div class="card-display">
+                            <span class="symbol">❓</span>
+                            <small>Key</small>
+                        </div>
+                        <small>Slot 1</small>
+                    </div>
+                    <div class="slot" data-index="1">
+                        <div class="card-display">
+                            <span class="symbol">❓</span>
+                            <small>Key</small>
+                        </div>
+                        <small>Slot 2</small>
+                    </div>
+                    <div class="slot" data-index="2">
+                        <div class="card-display">
+                            <span class="symbol">❓</span>
+                            <small>Key</small>
+                        </div>
+                        <small>Slot 3</small>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button onclick="game.dealBoard()">🔄 Deal New Board</button>
+                    <button onclick="game.resetGame()" class="secondary">🔄 Reset Game</button>
+                </div>
+            </div>
+
+            <!-- Player Hand -->
+            <div class="card">
+                <h2>🖐️ Your Hand (Query Cards)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 15px;">
+                    Select a Query card to match against the Board
+                </p>
+                <div class="hand" id="playerHand"></div>
+                
+                <div class="controls">
+                    <button onclick="game.playQuery()" id="playBtn" disabled>▶️ Play Query</button>
+                    <button onclick="game.drawCard()" class="secondary"> Draw Card</button>
+                </div>
+
+                <div class="tokens" id="tokenDisplay">
+                    <div class="token">⚖️</div>
+                    <div class="token">⚖️</div>
+                    <div class="token">⚖️</div>
+                    <div class="token">⚖️</div>
+                    <div class="token">⚖️</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attention Visualization -->
+        <div class="card">
+            <h2>📊 Attention Visualization</h2>
+            
+            <div class="formula">
+                Attention(<span>Q</span>, <span>K</span>, <span>V</span>) = Softmax(<span>QKᵀ</span>/√d) × <span>V</span>
+            </div>
+
+            <div class="attention-bar" id="attentionBar">
+                <div class="attention-segment" style="width: 33.3%; background: #ef4444;">0%</div>
+                <div class="attention-segment" style="width: 33.3%; background: #3b82f6;">0%</div>
+                <div class="attention-segment" style="width: 33.3%; background: #22c55e;">0%</div>
+            </div>
+
+            <div class="nn-analogy">
+                <h3>🧠 Neural Network Analogy</h3>
+                <div id="nnExplanation">
+                    <p><strong>Q (Query):</strong> What you're searching for (your selected card)</p>
+                    <p><strong>K (Key):</strong> What each board position offers (the Key cards)</p>
+                    <p><strong>V (Value):</strong> What you actually collect (the Value cards)</p>
+                    <p><strong>Softmax:</strong> Normalizes scores to probabilities (attention tokens)</p>
+                </div>
+            </div>
+
+            <svg class="progress-ring" viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="52"/>
+                <circle class="progress" cx="60" cy="60" r="52" 
+                        stroke-dasharray="326.73" stroke-dashoffset="326.73" id="progressCircle"/>
+                <text x="60" y="65" text-anchor="middle" fill="white" font-size="1.5rem" font-weight="bold" id="progressText">0%</text>
+            </svg>
+        </div>
+
+        <!-- Game Log -->
+        <div class="card" style="margin-top: 20px;">
+            <h2>📜 Game Log</h2>
+            <div class="log" id="gameLog">
+                <div class="log-entry info">Welcome to ATTENTION: The Card Game!</div>
+                <div class="log-entry info">Select a Query card from your hand to begin.</div>
+            </div>
+        </div>
+
+        <!-- Learning Section -->
+        <div class="grid" style="margin-top: 20px;">
+            <div class="card">
+                <h2>📚 How Attention Works</h2>
+                <ol style="margin-left: 20px; line-height: 2;">
+                    <li><strong>Query:</strong> You choose what to focus on</li>
+                    <li><strong>Score:</strong> Match Query against all Keys (Q×K)</li>
+                    <li><strong>Softmax:</strong> Convert scores to probabilities (sum to 1)</li>
+                    <li><strong>Value:</strong> Collect weighted by attention (×V)</li>
+                </ol>
+                <div class="controls" style="margin-top: 20px;">
+                    <button onclick="ui.showTutorial()">📖 Full Tutorial</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🎯 Learning Objectives</h2>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>Understand Q, K, V relationships</li>
+                    <li>Visualize Softmax normalization</li>
+                    <li>See attention weights in action</li>
+                    <li>Connect game mechanics to neural nets</li>
+                </ul>
+                <div class="stats" style="margin-top: 20px;">
+                    <div class="stat-box">
+                        <div class="value" id="matchesFound">0</div>
+                        <div class="label">Matches Found</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="attentionUsed">0</div>
+                        <div class="label">Attention Used</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="cardsCollected">0</div>
+                        <div class="label">Cards Collected</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🎴 ATTENTION: The Card Game — Educational Tool for Understanding Neural Network Attention</p>
+            <p style="margin-top: 10px;">Based on Transformer Architecture | Formula: Attention(Q,K,V) = Softmax(QKᵀ/√d)V</p>
+        </footer>
+    </div>
+
+    <script>
+        // Game State
+        const game = {
+            score: 0,
+            round: 1,
+            tokens: 5,
+            hand: [],
+            board: [],
+            selectedQuery: null,
+            matchesFound: 0,
+            attentionUsed: 0,
+            cardsCollected: 0,
+
+            symbols: ['●', '▲', '■', '◆'],
+            colors: [
+                { name: 'red', class: 'red', emoji: '🔴' },
+                { name: 'blue', class: 'blue', emoji: '🔵' },
+                { name: 'green', class: 'green', emoji: '🟢' }
+            ],
+
+            init() {
+                this.dealHand();
+                this.dealBoard();
+                ui.updateAll();
+                ui.log('Game initialized! Select a Query card to begin.', 'info');
+            },
+
+            dealHand() {
+                this.hand = [];
+                for (let i = 0; i < 3; i++) {
+                    this.hand.push(this.createCard('query'));
+                }
+            },
+
+            dealBoard() {
+                this.board = [];
+                for (let i = 0; i < 3; i++) {
+                    this.board.push({
+                        key: this.createCard('key'),
+                        value: this.createCard('value'),
+                        attention: 0
+                    });
+                }
+                ui.renderBoard();
+                ui.log('New board dealt! 3 Key-Value pairs ready.', 'info');
+            },
+
+            createCard(type) {
+                const symbol = this.symbols[Math.floor(Math.random() * this.symbols.length)];
+                const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                return {
+                    type,
+                    symbol,
+                    color: color.name,
+                    colorEmoji: color.emoji,
+                    points: type === 'value' ? Math.floor(Math.random() * 3) + 1 : 0
+                };
+            },
+
+            selectQuery(index) {
+                this.selectedQuery = index;
+                ui.renderHand();
+                ui.log(`Query card selected: ${this.hand[index].colorEmoji}${this.hand[index].symbol}`, 'info');
+            },
+
+            playQuery() {
+                if (this.selectedQuery === null || this.tokens <= 0) {
+                    ui.log('Please select a query card first!', 'warning');
+                    return;
+                }
+
+                const query = this.hand[this.selectedQuery];
+                const scores = this.board.map(slot => this.calculateScore(query, slot.key));
+                
+                ui.log(`Calculating attention scores...`, 'info');
+                
+                // Calculate softmax
+                const softmax = this.calculateSoftmax(scores);
+                
+                // Update attention visualization
+                ui.updateAttentionBar(softmax, scores);
+                ui.updateProgress(softmax.reduce((a, b) => Math.max(a, b), 0) * 100);
+                
+                // Distribute tokens based on attention
+                const tokensUsed = Math.min(this.tokens, 3);
+                this.tokens -= tokensUsed;
+                this.attentionUsed += tokensUsed;
+                
+                ui.log(`Attention distributed: [${softmax.map(s => (s*100).toFixed(0) + '%').join(', ')}]`, 'success');
+                
+                // Collect value cards based on attention
+                softmax.forEach((attention, i) => {
+                    if (attention > 0.3) {
+                        this.score += this.board[i].value.points;
+                        this.cardsCollected++;
+                        ui.log(`Collected Value card ${i+1}: ${this.board[i].value.points} points`, 'success');
+                    }
+                });
+
+                this.matchesFound++;
+                this.round++;
+                this.selectedQuery = null;
+                
+                // Remove used query and draw new one
+                this.hand.splice(this.selectedQuery, 1);
+                this.hand.push(this.createCard('query'));
+                
+                ui.updateAll();
+                ui.log(`Round ${this.round} complete! Score: ${this.score}`, 'info');
+            },
+
+            calculateScore(query, key) {
+                let score = 0;
+                if (query.color === key.color) score += 2;
+                if (query.symbol === key.symbol) score += 2;
+                return score;
+            },
+
+            calculateSoftmax(scores) {
+                const maxScore = Math.max(...scores);
+                const expScores = scores.map(s => Math.exp(s - maxScore));
+                const sumExp = expScores.reduce((a, b) => a + b, 0);
+                return expScores.map(e => e / sumExp);
+            },
+
+            drawCard() {
+                if (this.hand.length < 5) {
+                    this.hand.push(this.createCard('query'));
+                    ui.renderHand();
+                    ui.log('Drew a new Query card', 'info');
+                } else {
+                    ui.log('Hand is full (max 5 cards)', 'warning');
+                }
+            },
+
+            resetGame() {
+                this.score = 0;
+                this.round = 1;
+                this.tokens = 5;
+                this.matchesFound = 0;
+                this.attentionUsed = 0;
+                this.cardsCollected = 0;
+                this.selectedQuery = null;
+                this.dealHand();
+                this.dealBoard();
+                ui.updateAll();
+                ui.log('Game reset! Ready to play.', 'info');
+            }
+        };
+
+        // UI Controller
+        const ui = {
+            updateAll() {
+                document.getElementById('score').textContent = game.score;
+                document.getElementById('round').textContent = game.round;
+                document.getElementById('tokens').textContent = game.tokens;
+                document.getElementById('matchesFound').textContent = game.matchesFound;
+                document.getElementById('attentionUsed').textContent = game.attentionUsed;
+                document.getElementById('cardsCollected').textContent = game.cardsCollected;
+                document.getElementById('playBtn').disabled = game.selectedQuery === null;
+                this.renderHand();
+                this.updateTokenDisplay();
+            },
+
+            renderHand() {
+                const container = document.getElementById('playerHand');
+                container.innerHTML = game.hand.map((card, i) => `
+                    <div class="hand-card ${game.selectedQuery === i ? 'selected' : ''}" 
+                         onclick="game.selectQuery(${i})">
+                        <span class="symbol ${card.color}">${card.colorEmoji}</span>
+                        <span class="symbol">${card.symbol}</span>
+                        <small>Q</small>
+                    </div>
+                `).join('');
+            },
+
+            renderBoard() {
+                game.board.forEach((slot, i) => {
+                    const el = document.querySelector(`.slot[data-index="${i}"]`);
+                    el.innerHTML = `
+                        <div class="card-display">
+                            <span class="symbol ${slot.key.color}">${slot.key.colorEmoji}</span>
+                            <span class="symbol">${slot.key.symbol}</span>
+                            <small>Key</small>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.8rem;">
+                            💎 ${slot.value.points}★
+                        </div>
+                        <small>Slot ${i + 1}</small>
+                    `;
+                });
+            },
+
+            updateAttentionBar(softmax, scores) {
+                const bar = document.getElementById('attentionBar');
+                const colors = ['#ef4444', '#3b82f6', '#22c55e'];
+                bar.innerHTML = softmax.map((s, i) => `
+                    <div class="attention-segment" 
+                         style="width: ${s * 100}%; background: ${colors[i]};">
+                        ${(s * 100).toFixed(0)}%
+                    </div>
+                `).join('');
+            },
+
+            updateProgress(percentage) {
+                const circle = document.getElementById('progressCircle');
+                const text = document.getElementById('progressText');
+                const circumference = 326.73;
+                const offset = circumference - (percentage / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+                text.textContent = `${percentage.toFixed(0)}%`;
+            },
+
+            updateTokenDisplay() {
+                const container = document.getElementById('tokenDisplay');
+                container.innerHTML = Array(game.tokens).fill('<div class="token">⚖️</div>').join('');
+            },
+
+            log(message, type = 'info') {
+                const log = document.getElementById('gameLog');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[Round ${game.round}] ${message}`;
+                log.insertBefore(entry, log.firstChild);
+            },
+
+            showTutorial() {
+                alert(`📖 ATTENTION TUTORIAL
+
+1. SELECT a Query card from your hand
+2. PLAY to match against board Keys
+3. SCORE = Color Match (2pts) + Symbol Match (2pts)
+4. SOFTMAX converts scores to attention %
+5. COLLECT Value cards based on attention
+
+ NEURAL NET ANALOGY:
+• Query = What the model searches for
+• Key = What each position offers
+• Value = What gets retrieved
+• Softmax = Normalizes to probabilities
+
+Formula: Attention(Q,K,V) = Softmax(QKᵀ/√d)V`);
+            }
+        };
+
+        // Initialize game on load
+        window.addEventListener('DOMContentLoaded', () => {
+            game.init();
+        });
+    </script>
+</body>
+</html>
