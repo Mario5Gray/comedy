@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analog Neural Compute & Robotics — Part 1/N</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Barlow+Condensed:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080b0f;
+  --bg2:      #0d1117;
+  --bg3:      #111820;
+  --surface:  #141c26;
+  --surface2: #1a2535;
+  --border:   rgba(0,200,255,0.12);
+  --border2:  rgba(0,200,255,0.06);
+  --cyan:     #00c8ff;
+  --cyan-dim: rgba(0,200,255,0.18);
+  --amber:    #f5a623;
+  --amber-dim:rgba(245,166,35,0.15);
+  --green:    #00e5a0;
+  --green-dim:rgba(0,229,160,0.12);
+  --red:      #ff4d6a;
+  --text:     #c8d8e8;
+  --text2:    #7a9ab8;
+  --text3:    #445566;
+  --white:    #eef4fa;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'Barlow', sans-serif;
+  --cond:     'Barlow Condensed', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── SCANLINE OVERLAY ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ── CIRCUIT GRID BACKGROUND ── */
+.circuit-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--border2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border2) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(8,11,15,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-series {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.nav-series::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.nav-links {
+  display: flex; gap: 2rem; list-style: none;
+}
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text2);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--cyan); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg-visual {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(0,200,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(245,166,35,0.04) 0%, transparent 50%);
+}
+
+/* Animated circuit traces */
+.trace {
+  position: absolute;
+  background: var(--cyan);
+  opacity: 0;
+  animation: tracePulse 4s ease-in-out infinite;
+}
+.trace-h { height: 1px; }
+.trace-v { width: 1px; }
+.trace-1 { top: 25%; left: 0; width: 35%; animation-delay: 0s; }
+.trace-2 { top: 40%; right: 0; width: 25%; animation-delay: 0.8s; }
+.trace-3 { top: 62%; left: 0; width: 45%; animation-delay: 1.6s; }
+.trace-4 { left: 35%; top: 0; height: 25%; animation-delay: 0.4s; }
+.trace-5 { right: 25%; top: 0; height: 40%; animation-delay: 1.2s; }
+@keyframes tracePulse {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.4; }
+  70%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+
+.hero-content {
+  position: relative; z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 3rem;
+  width: 100%;
+}
+
+.series-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--cyan-dim);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--cyan);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero-eyebrow {
+  font-family: var(--cond);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 1rem;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+h1 {
+  font-family: var(--cond);
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+h1 .accent { color: var(--cyan); }
+h1 .dim { color: var(--text2); font-weight: 300; }
+
+.hero-sub {
+  font-family: var(--sans);
+  font-size: 1.15rem;
+  font-weight: 300;
+  color: var(--text2);
+  max-width: 640px;
+  margin: 1.5rem 0 3rem;
+  line-height: 1.6;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 3rem;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+.meta-item { }
+.meta-label {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: var(--text3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.meta-value {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--cyan);
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── LAYOUT ── */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── SECTION WRAPPERS ── */
+section {
+  padding: 5rem 0;
+  border-bottom: 1px solid var(--border2);
+  position: relative;
+  z-index: 2;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.section-num {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  padding-top: 0.5rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.section-titles {}
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text3);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+h2 {
+  font-family: var(--cond);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+h2 .hl { color: var(--cyan); }
+h3 {
+  font-family: var(--cond);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.01em;
+  margin-bottom: 0.75rem;
+}
+
+p { color: var(--text); margin-bottom: 1.1rem; }
+p:last-child { margin-bottom: 0; }
+strong { color: var(--white); font-weight: 600; }
+em { color: var(--cyan); font-style: normal; }
+
+/* ── EXEC SUMMARY ── */
+.exec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+.exec-cell {
+  background: var(--surface);
+  padding: 1.75rem;
+}
+.exec-cell-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--text3);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.exec-cell-value {
+  font-family: var(--cond);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+.exec-cell-desc {
+  font-size: 0.82rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.thesis-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  padding: 1.75rem 2rem;
+}
+.thesis-block p {
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1.75;
+}
+
+/* ── TWO-COL BODY ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+.two-col-wide {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* ── CALLOUT / INLINE HIGHLIGHT ── */
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.callout-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--amber);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.callout p { font-size: 0.92rem; color: var(--text2); margin: 0; }
+
+/* ── CIRCUIT / OPERATOR DIAGRAM ── */
+.op-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  font-family: var(--mono);
+}
+.op-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border2);
+}
+.op-row:last-child { margin-bottom: 0; padding-bottom: 0; border: none; }
+.op-name {
+  font-size: 0.75rem;
+  color: var(--cyan);
+  min-width: 90px;
+  letter-spacing: 0.05em;
+}
+.op-circuit {
+  font-size: 0.65rem;
+  color: var(--text2);
+  flex: 1;
+}
+.op-hw {
+  font-size: 0.65rem;
+  color: var(--amber);
+  text-align: right;
+  min-width: 160px;
+}
+
+/* ── RELU SVG ── */
+.relu-chart {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.relu-chart-title {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ── COMPANY CARDS ── */
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 2rem;
+}
+.company-card {
+  background: var(--bg2);
+  padding: 1.5rem;
+  position: relative;
+  transition: background 0.2s;
+}
+.company-card:hover { background: var(--surface); }
+.company-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.cc-cyan::before  { background: var(--cyan); }
+.cc-amber::before { background: var(--amber); }
+.cc-green::before { background: var(--green); }
+.cc-red::before   { background: var(--red); }
+
+.company-name {
+  font-family: var(--cond);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+}
+.company-type {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+.company-desc {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+.company-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.tag {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tag-cyan  { background: var(--cyan-dim);  color: var(--cyan);  border: 1px solid var(--border); }
+.tag-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.tag-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+
+/* ── INVESTMENT SIGNALS ── */
+.signal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  margin-top: 1.5rem;
+}
+.signal-table th {
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.signal-table td {
+  padding: 0.85rem 0.9rem;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border2);
+  vertical-align: top;
+}
+.signal-table td:first-child { color: var(--white); font-weight: 500; }
+.signal-table tr:hover td { background: var(--surface2); }
+
+.dot-bull { color: var(--green); }
+.dot-bear { color: var(--red); }
+.dot-neut { color: var(--amber); }
+
+/* ── RISK MATRIX ── */
+.risk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 2rem;
+}
+.risk-cell {
+  background: var(--bg2);
+  padding: 1.5rem;
+}
+.risk-cell-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.risk-icon {
+  font-size: 1rem;
+}
+.risk-title {
+  font-family: var(--cond);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+}
+.risk-severity {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sev-high   { background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.2); }
+.sev-med    { background: var(--amber-dim);       color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.sev-low    { background: var(--green-dim);        color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+.risk-desc  { font-size: 0.85rem; color: var(--text2); line-height: 1.55; }
+
+/* ── ROBOTICS BRIDGE ── */
+.robotics-banner {
+  background: linear-gradient(135deg, var(--bg3) 0%, var(--surface2) 100%);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  padding: 2.5rem;
+  margin: 2.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+.robotics-banner::after {
+  content: 'ROBOTICS NEXUS';
+  position: absolute;
+  right: 2rem; top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--cond);
+  font-size: 5rem;
+  font-weight: 800;
+  color: rgba(245,166,35,0.04);
+  letter-spacing: -0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.robotics-banner h3 {
+  color: var(--amber);
+  margin-bottom: 1rem;
+}
+
+/* ── HORIZON TABLE ── */
+.horizon-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+.horizon-row + .horizon-row { margin-top: 1px; }
+.h-cell {
+  background: var(--bg2);
+  padding: 1.1rem 1.25rem;
+}
+.h-cell.header { background: var(--surface); }
+.h-cell-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.h-cell-content {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.h-cell-content.cyan  { color: var(--cyan);  }
+.h-cell-content.amber { color: var(--amber); }
+.h-cell-content.green { color: var(--green); }
+
+/* ── QUOTE ── */
+.mono-quote {
+  border-left: 2px solid var(--cyan);
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+  background: var(--bg2);
+}
+.mono-quote p {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text2);
+  font-style: italic;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 3rem;
+  position: relative;
+  z-index: 2;
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.footer-left {}
+.footer-series {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+.footer-disclaimer {
+  font-size: 0.78rem;
+  color: var(--text3);
+  max-width: 500px;
+  line-height: 1.5;
+}
+.footer-right {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text3);
+  text-align: right;
+  line-height: 1.8;
+}
+.footer-right .next {
+  color: var(--amber);
+  font-size: 0.65rem;
+}
+
+/* ── SCROLL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .container { padding: 0 1.25rem; }
+  .hero-content { padding: 0 1.25rem; }
+  .two-col, .two-col-wide { grid-template-columns: 1fr; }
+  .exec-grid { grid-template-columns: 1fr; }
+  .company-grid { grid-template-columns: 1fr; }
+  .risk-grid { grid-template-columns: 1fr; }
+  .horizon-row { grid-template-columns: 1fr 1fr; }
+  nav .nav-links { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="circuit-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-series">DEEP COMPUTE SERIES · PART 1/N</div>
+  <ul class="nav-links">
+    <li><a href="#primer">Primer</a></li>
+    <li><a href="#operators">Operators</a></li>
+    <li><a href="#landscape">Landscape</a></li>
+    <li><a href="#robotics">Robotics</a></li>
+    <li><a href="#investment">Investment</a></li>
+    <li><a href="#risks">Risks</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg-visual"></div>
+  <div class="trace trace-h trace-1"></div>
+  <div class="trace trace-h trace-2"></div>
+  <div class="trace trace-h trace-3"></div>
+  <div class="trace trace-v trace-4"></div>
+  <div class="trace trace-v trace-5"></div>
+
+  <div class="hero-content">
+    <div class="series-badge">⬡ Deep Compute Series &nbsp;·&nbsp; Part 1 / N &nbsp;·&nbsp; Analog + Neuromorphic</div>
+    <div class="hero-eyebrow">Analog Neural Compute &amp; Robotics</div>
+    <h1>Can We Build<br>Neural Nets in <span class="accent">Silicon</span><br><span class="dim">— For Real?</span></h1>
+    <p class="hero-sub">A technical and investment primer on analog/neuromorphic compute: why the activation function was never the hard part, what the actual bottleneck is, and why solving it could define the next generation of embodied AI.</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Sector</div>
+        <div class="meta-value">Semiconductor / AI Infrastructure</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Horizon</div>
+        <div class="meta-value">3–10 Year Thesis</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Robotics Link</div>
+        <div class="meta-value">Edge Inference / Embodied AI</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXEC SUMMARY -->
+<section id="primer">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">00</div>
+      <div class="section-titles">
+        <div class="section-label">Executive Summary</div>
+        <h2>The <span class="hl">Compression</span> Imperative</h2>
+      </div>
+    </div>
+
+    <div class="exec-grid reveal">
+      <div class="exec-cell">
+        <div class="exec-cell-label">Energy Gap</div>
+        <div class="exec-cell-value">1000×</div>
+        <div class="exec-cell-desc">The brain performs roughly equivalent inference at ~20W versus kilowatts for modern GPU clusters. Closing even a fraction of this gap is the entire point of analog compute.</div>
+      </div>
+      <div class="exec-cell">
+        <div class="exec-cell-label">MAC Bottleneck</div>
+        <div class="exec-cell-value">~70%</div>
+        <div class="exec-cell-desc">Multiply-accumulate operations consume the dominant share of compute in transformer and CNN inference. Analog crossbar arrays execute this with physics — one shot, no clock cycles.</div>
+      </div>
+      <div class="exec-cell">
+        <div class="exec-cell-label">Robotics Pressure</div>
+        <div class="exec-cell-value">2W</div>
+        <div class="exec-cell-desc">Practical robotics edge compute budget — constrained by battery, thermal envelope, and form factor. Digital GPUs are incompatible with this constraint at current inference density.</div>
+      </div>
+    </div>
+
+    <div class="thesis-block reveal">
+      <p>
+        The central insight is this: <strong>modern AI is a software paradigm running on hardware that was not designed for it.</strong> GPUs are repurposed graphics processors; their dominance is historical, not physical. The actual operations in a neural network — weighted sums, nonlinearities, state transitions — are things that physics already does for free in the right circuit topologies. The question is not whether analog neural compute is possible. It is whether the precision, programmability, and training-compatibility problems are solvable at a pace that matters. Current evidence suggests they are — incrementally, starting with inference, and converging on robotics as the killer application.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- OPERATORS -->
+<section id="operators">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">01</div>
+      <div class="section-titles">
+        <div class="section-label">Technical Primer</div>
+        <h2>Neural <span class="hl">Operators</span> as Circuits</h2>
+      </div>
+    </div>
+
+    <div class="two-col-wide">
+      <div class="reveal">
+        <p>The question "can't we just build neural networks in hardware?" has a cleaner answer than most people expect: <strong>the activation functions were always implemented in hardware, and always trivially so.</strong> The problem was never ReLU. The problem was the weight matrix.</p>
+
+        <div class="op-diagram">
+          <div style="font-family:var(--mono); font-size:0.58rem; color:var(--text3); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:1.25rem;">Neural Operators → Circuit Equivalents</div>
+
+          <div class="op-row">
+            <div class="op-name">ReLU</div>
+            <div class="op-circuit">max(0,x) → half-wave rectifier<br><span style="color:var(--text3)">diode + resistor. passive. trivial.</span></div>
+            <div class="op-hw">Diode / Schottky</div>
+          </div>
+          <div class="op-row">
+            <div class="op-name">Sigmoid</div>
+            <div class="op-circuit">1/(1+e⁻ˣ) → differential pair<br><span style="color:var(--text3)">BJT or FET diff amp. natural S-curve.</span></div>
+            <div class="op-hw">Diff. Transistor Pair</div>
+          </div>
+          <div class="op-row">
+            <div class="op-name">Tanh</div>
+            <div class="op-circuit">S-curve, zero-centered<br><span style="color:var(--text3)">balanced diff pair + bias.</span></div>
+            <div class="op-hw">Balanced Diff Amp</div>
+          </div>
+          <div class="op-row">
+            <div class="op-name">Dot Product</div>
+            <div class="op-circuit">Σ wᵢxᵢ → Ohm + Kirchhoff<br><span style="color:var(--text3)">V·G = I. crossbar array.</span></div>
+            <div class="op-hw">Memristor Crossbar ★</div>
+          </div>
+          <div class="op-row">
+            <div class="op-name">Softmax</div>
+            <div class="op-circuit">WTA circuit / normalization<br><span style="color:var(--text3)">harder. approximated in analog.</span></div>
+            <div class="op-hw">WTA / Current Mirror</div>
+          </div>
+          <div class="op-row">
+            <div class="op-name">Attention</div>
+            <div class="op-circuit">QKV similarity + sum<br><span style="color:var(--text3)">active research. not solved at scale.</span></div>
+            <div class="op-hw">Open Problem ⚠</div>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:1.5rem;">
+          <div class="callout-label">Key Insight</div>
+          <p>The ★ entry above is the important one. A crossbar of variable-resistance elements (memristors, PCM, flash cells) where input voltages × conductance values = output current <em>is</em> a matrix multiply. Ohm's Law and Kirchhoff's Current Law perform the operation simultaneously across all rows. No clock. No fetch. This is the core of every serious analog AI chip.</p>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <!-- SVG: ReLU + Memristor crossbar diagram -->
+        <div class="relu-chart">
+          <div class="relu-chart-title">ReLU — circuit to function</div>
+          <svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+            <defs>
+              <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#7a9ab8"/>
+              </marker>
+            </defs>
+            <!-- axes -->
+            <line x1="30" y1="150" x2="260" y2="150" stroke="#445566" stroke-width="1" marker-end="url(#arr)"/>
+            <line x1="140" y1="20" x2="140" y2="160" stroke="#445566" stroke-width="1" marker-end="url(#arr)"/>
+            <!-- axis labels -->
+            <text x="255" y="165" fill="#445566" font-family="'IBM Plex Mono'" font-size="9">x</text>
+            <text x="144" y="18"  fill="#445566" font-family="'IBM Plex Mono'" font-size="9">f(x)</text>
+            <!-- ReLU line — flat then rising -->
+            <polyline points="30,150 140,150 250,40" stroke="#00c8ff" stroke-width="2.5" fill="none"/>
+            <!-- diode symbol -->
+            <polygon points="190,90 205,82 205,98" fill="none" stroke="#f5a623" stroke-width="1.5"/>
+            <line x1="205" y1="82" x2="205" y2="98" stroke="#f5a623" stroke-width="1.5"/>
+            <line x1="178" y1="90" x2="190" y2="90" stroke="#f5a623" stroke-width="1.5"/>
+            <line x1="205" y1="90" x2="218" y2="90" stroke="#f5a623" stroke-width="1.5"/>
+            <text x="188" y="115" fill="#f5a623" font-family="'IBM Plex Mono'" font-size="8">diode = ReLU</text>
+          </svg>
+        </div>
+
+        <div class="relu-chart" style="margin-top:1rem;">
+          <div class="relu-chart-title">Memristor crossbar — matrix multiply in physics</div>
+          <svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+            <!-- input voltages (left) -->
+            <text x="4" y="68"  fill="#00c8ff" font-family="'IBM Plex Mono'" font-size="9">V₁</text>
+            <text x="4" y="108" fill="#00c8ff" font-family="'IBM Plex Mono'" font-size="9">V₂</text>
+            <text x="4" y="148" fill="#00c8ff" font-family="'IBM Plex Mono'" font-size="9">V₃</text>
+
+            <!-- horizontal wires -->
+            <line x1="22" y1="65"  x2="245" y2="65"  stroke="#1a3a5c" stroke-width="1.2"/>
+            <line x1="22" y1="105" x2="245" y2="105" stroke="#1a3a5c" stroke-width="1.2"/>
+            <line x1="22" y1="145" x2="245" y2="145" stroke="#1a3a5c" stroke-width="1.2"/>
+
+            <!-- vertical wires -->
+            <line x1="80"  y1="30" x2="80"  y2="175" stroke="#1a3a5c" stroke-width="1.2"/>
+            <line x1="140" y1="30" x2="140" y2="175" stroke="#1a3a5c" stroke-width="1.2"/>
+            <line x1="200" y1="30" x2="200" y2="175" stroke="#1a3a5c" stroke-width="1.2"/>
+
+            <!-- memristor nodes (zigzag squares) at each intersection -->
+            <!-- row1 -->
+            <rect x="72"  y="57" width="16" height="16" fill="#141c26" stroke="#00c8ff" stroke-width="1.2" rx="1"/>
+            <rect x="132" y="57" width="16" height="16" fill="#141c26" stroke="#00c8ff" stroke-width="1.2" rx="1"/>
+            <rect x="192" y="57" width="16" height="16" fill="#141c26" stroke="#00c8ff" stroke-width="1.2" rx="1"/>
+            <!-- row2 -->
+            <rect x="72"  y="97"  width="16" height="16" fill="#141c26" stroke="#f5a623" stroke-width="1.2" rx="1"/>
+            <rect x="132" y="97"  width="16" height="16" fill="#141c26" stroke="#f5a623" stroke-width="1.2" rx="1"/>
+            <rect x="192" y="97"  width="16" height="16" fill="#141c26" stroke="#f5a623" stroke-width="1.2" rx="1"/>
+            <!-- row3 -->
+            <rect x="72"  y="137" width="16" height="16" fill="#141c26" stroke="#00e5a0" stroke-width="1.2" rx="1"/>
+            <rect x="132" y="137" width="16" height="16" fill="#141c26" stroke="#00e5a0" stroke-width="1.2" rx="1"/>
+            <rect x="192" y="137" width="16" height="16" fill="#141c26" stroke="#00e5a0" stroke-width="1.2" rx="1"/>
+
+            <!-- output labels -->
+            <text x="74"  y="193" fill="#7a9ab8" font-family="'IBM Plex Mono'" font-size="9" text-anchor="middle">I₁</text>
+            <text x="140" y="193" fill="#7a9ab8" font-family="'IBM Plex Mono'" font-size="9" text-anchor="middle">I₂</text>
+            <text x="200" y="193" fill="#7a9ab8" font-family="'IBM Plex Mono'" font-size="9" text-anchor="middle">I₃</text>
+
+            <!-- label -->
+            <text x="140" y="18" fill="#445566" font-family="'IBM Plex Mono'" font-size="8" text-anchor="middle">G matrix (weights) · V (inputs) = I (outputs)</text>
+          </svg>
+        </div>
+
+        <p style="font-family:var(--mono); font-size:0.72rem; color:var(--text3); margin-top:0.75rem; line-height:1.5;">Each intersection is a memristor encoding a weight. Input voltages × conductances = output currents (Σ V·G = I). The entire matrix multiply happens simultaneously in physics — not sequentially in a MAC unit.</p>
+      </div>
+    </div>
+
+    <div class="two-col reveal" style="margin-top:3rem;">
+      <div>
+        <h3>Why Backpropagation Is the Real Wall</h3>
+        <p>The forward pass through an analog network is the easy part. Backpropagation — the algorithm that trains every modern neural network — requires computing precise gradients flowing backward through every layer. This means knowing, at high precision, exactly what happened in the forward pass.</p>
+        <p>Noisy analog hardware does not preserve that information cleanly. You cannot differentiate through thermal drift. This is why every commercial analog AI chip today is <strong>inference-only</strong>: weights are trained digitally, then programmed into the analog fabric for deployment.</p>
+        <p>The research frontier is <em>on-chip learning</em> — local learning rules (Hebbian, STDP, perturbation-based gradient estimates) that don't require precise global backprop. Biologically plausible, potentially powerful, not yet competitive with SGD at scale.</p>
+      </div>
+      <div>
+        <h3>Precision — The Other Hard Problem</h3>
+        <p>Digital computation is inherently noise-immune — a transistor is on or off, and threshold variation doesn't change the bit value. Analog values are continuous and drift with temperature, aging, and fabrication variance.</p>
+        <p>The good news: modern neural networks are surprisingly tolerant of weight precision. Research has demonstrated competitive accuracy at 4-bit and even 2-bit quantization for inference. The analog compute community has essentially been gifted a precision budget by the ML community's push toward quantization.</p>
+        <div class="callout">
+          <div class="callout-label">Inflection Point</div>
+          <p>As quantization research pushes toward 1–2 bit weights (1-bit transformers, BitNet), the precision requirements for analog hardware converge toward what is reliably achievable. These fields are on a collision course — and the intersection is inference silicon.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LANDSCAPE -->
+<section id="landscape">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">02</div>
+      <div class="section-titles">
+        <div class="section-label">Company Landscape</div>
+        <h2>Who Is <span class="hl">Building</span> This</h2>
+      </div>
+    </div>
+
+    <div class="company-grid reveal">
+      <div class="company-card cc-cyan">
+        <div class="company-name">Mythic AI</div>
+        <div class="company-type">Startup · Inference ASIC</div>
+        <div class="company-desc">Flash memory cells as analog multipliers. Each cell's threshold voltage encodes a weight; read current proportional to the multiply result. Claims 25 TOPS/W — inference at extreme efficiency. Raised ~$165M. Targeting edge deployment: drones, robotics, industrial vision.</div>
+        <div class="company-tags">
+          <span class="tag tag-cyan">Analog MAC</span>
+          <span class="tag tag-amber">Edge Inference</span>
+          <span class="tag tag-cyan">Flash NVM Weights</span>
+        </div>
+      </div>
+
+      <div class="company-card cc-amber">
+        <div class="company-name">IBM Analog AI</div>
+        <div class="company-type">Research Lab → Commercialization</div>
+        <div class="company-desc">Phase-change memory (PCM) crossbar arrays for DNN inference. Demonstrated ResNet-32 on CIFAR-10 with analog hardware accuracy within ~1% of digital baseline. IBM's goal is analog AI accelerators for data center inference at dramatically reduced energy. Long research runway; patient capital required.</div>
+        <div class="company-tags">
+          <span class="tag tag-cyan">PCM Crossbar</span>
+          <span class="tag tag-amber">Research Stage</span>
+          <span class="tag tag-green">High Accuracy</span>
+        </div>
+      </div>
+
+      <div class="company-card cc-green">
+        <div class="company-name">Intel Loihi 2</div>
+        <div class="company-type">Neuromorphic · Spiking NN</div>
+        <div class="company-desc">Spiking neural network architecture — closer to biological neuron dynamics than backprop-trained MLPs. 1M neurons, fully programmable on-chip learning. Ultra-low power for sparse, event-driven workloads. Killer use case: sensor fusion in robotics where data is inherently sparse and temporal. Still pre-commercial.</div>
+        <div class="company-tags">
+          <span class="tag tag-cyan">Spiking NN</span>
+          <span class="tag tag-amber">On-chip Learning</span>
+          <span class="tag tag-green">Robotics Target</span>
+        </div>
+      </div>
+
+      <div class="company-card cc-red">
+        <div class="company-name">BrainScaleS</div>
+        <div class="company-type">Academic · EU HBP Project</div>
+        <div class="company-desc">Physical emulation of neurons and synapses in analog CMOS. Runs 1,000× faster than biological timescale — 10 ms biological = 10 µs silicon. Used for neuroscience research and algorithm exploration. Not commercial; academic access via Heidelberg. Important for understanding what analog learning can do.</div>
+        <div class="company-tags">
+          <span class="tag tag-amber">Neuroscience</span>
+          <span class="tag tag-cyan">1000× Real-time</span>
+          <span class="tag tag-amber">Non-commercial</span>
+        </div>
+      </div>
+
+      <div class="company-card cc-cyan">
+        <div class="company-name">Memristor Research</div>
+        <div class="company-type">TSMC / Samsung / HP Labs</div>
+        <div class="company-desc">The long game. Memristors — resistors with memory — are the ideal analog weight storage: non-volatile, continuously variable, stackable in 3D crossbar arrays. TSMC and Samsung are integrating memristor layers into CMOS process nodes. The timeline is 5–8 years to production, but this is the end-state architecture for analog AI weight storage.</div>
+        <div class="company-tags">
+          <span class="tag tag-cyan">Memristors</span>
+          <span class="tag tag-green">5-8yr Horizon</span>
+          <span class="tag tag-amber">Process Integration</span>
+        </div>
+      </div>
+
+      <div class="company-card cc-amber">
+        <div class="company-name">SpiNNaker 2</div>
+        <div class="company-type">TU Dresden · ARM-based Neuro</div>
+        <div class="company-desc">152-core ARM-based neuromorphic chip with local SIMD for neural simulation. Not pure analog — hybrid digital/neuromorphic. Supports standard ML frameworks (TensorFlow, PyTorch export). Potentially the fastest path to production neuromorphic hardware that ML engineers can actually program with existing toolchains.</div>
+        <div class="company-tags">
+          <span class="tag tag-cyan">Hybrid Digital</span>
+          <span class="tag tag-green">PyTorch Compatible</span>
+          <span class="tag tag-amber">Near-term</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mono-quote reveal" style="margin-top:2.5rem;">
+      <p>// The GPU's dominance is a historical accident. Nvidia won the ML era because CUDA landed first. The next substrate will be won by whoever ships first on the embodied AI energy constraint — and that race has not been decided.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ROBOTICS -->
+<section id="robotics">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">03</div>
+      <div class="section-titles">
+        <div class="section-label">Robotics Bridge</div>
+        <h2>Why <span class="hl">Robotics</span> Changes Everything</h2>
+      </div>
+    </div>
+
+    <div class="robotics-banner reveal">
+      <h3>The Embodied AI Energy Problem</h3>
+      <p>The data center inference problem is a cost problem. The robotics inference problem is a <strong>physics problem.</strong> A humanoid robot, drone, or mobile manipulator has a hard thermal envelope (no active cooling), a hard battery budget (1–10W for onboard compute), and a hard latency requirement (sub-10ms for motor control loops). NVIDIA's Jetson Orin draws 60W at peak. That is not a rounding error — it is categorically incompatible with a large class of robotic form factors without tethering or impractical battery mass.</p>
+      <p style="margin-top:1rem;">Analog and neuromorphic inference chips running at 1–5W for the same task are not a nice-to-have. They are the precondition for the robot form factors that matter — fingertip sensors, micro-UAVs, prosthetics, distributed swarm nodes, insect-scale robots. The robotics wave is what gives neuromorphic compute its killer application.</p>
+    </div>
+
+    <div class="two-col reveal">
+      <div>
+        <h3>Where Neuromorphic Fits the Robot Stack</h3>
+        <p><strong>Sensor front-end:</strong> Event cameras (DVS cameras) produce sparse, asynchronous spike trains — not video frames. Spiking neural networks (SNNs) like Loihi process this data natively, with no frame buffering overhead. This is a natural match between sensor modality and compute substrate that has no analog in digital GPU processing.</p>
+        <p><strong>Motor control:</strong> Spinal cord analogs — low-latency reactive control loops that don't require cortical-level planning — are where neuromorphic compute is already competitive. Boston Dynamics-class problems (balance, gait, reactive foothold adjustment) are in principle well-suited to SNN controllers with on-chip plasticity.</p>
+        <p><strong>Perception at the edge:</strong> Object detection, pose estimation, semantic segmentation at the sensor node — before data hits a central processor — is where analog MAC chips like Mythic's target the stack. Reducing the data that flows centrally is as important as reducing central compute cost.</p>
+      </div>
+      <div>
+        <h3>The Convergence Thesis</h3>
+        <p>Three independently advancing curves are converging:</p>
+        <table class="signal-table">
+          <thead>
+            <tr>
+              <th>Curve</th>
+              <th>Direction</th>
+              <th>Meets Analog When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Model quantization</td>
+              <td class="dot-bull">↓ Precision req.</td>
+              <td>1–2 bit inference</td>
+            </tr>
+            <tr>
+              <td>Analog weight precision</td>
+              <td class="dot-bull">↑ Reliability</td>
+              <td>4–6 bit stable</td>
+            </tr>
+            <tr>
+              <td>Robot form factor demand</td>
+              <td class="dot-bull">↑ Energy pressure</td>
+              <td>Sub-5W hard req.</td>
+            </tr>
+            <tr>
+              <td>Memristor process maturity</td>
+              <td class="dot-bull">↑ Yield / density</td>
+              <td>TSMC N5 integration</td>
+            </tr>
+            <tr>
+              <td>Event camera adoption</td>
+              <td class="dot-bull">↑ Deployment</td>
+              <td>SNN-native pipeline</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top:1rem; font-size:0.88rem; color:var(--text2);">The crossover point where analog inference becomes the dominant edge substrate for robotics perception is not a matter of if — the physics guarantees it. It is a matter of which companies own the stack when it arrives.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT -->
+<section id="investment">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">04</div>
+      <div class="section-titles">
+        <div class="section-label">Investment Thesis</div>
+        <h2>Where <span class="hl">Capital</span> Should Look</h2>
+      </div>
+    </div>
+
+    <p class="reveal" style="max-width:720px; margin-bottom:2.5rem;"><em>Note: this is not financial advice. This is a structured framework for thinking about the space. All timelines are speculative; this is pre-commercial technology with significant technical risk.</em></p>
+
+    <!-- Horizon table -->
+    <div class="reveal">
+      <div style="font-family:var(--mono); font-size:0.58rem; color:var(--text3); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:0.75rem;">Investment Horizon Map</div>
+      <div class="horizon-row">
+        <div class="h-cell header"><div class="h-cell-label">Horizon</div></div>
+        <div class="h-cell header"><div class="h-cell-label">Technology</div></div>
+        <div class="h-cell header"><div class="h-cell-label">Opportunity</div></div>
+        <div class="h-cell header"><div class="h-cell-label">Risk Level</div></div>
+      </div>
+      <div class="horizon-row">
+        <div class="h-cell"><div class="h-cell-content cyan">0–2 yr</div></div>
+        <div class="h-cell"><div class="h-cell-content">Digital quantization chips (TPU, custom ASIC). NVDA inference at edge. Hybrid digital/neuromorphic (SpiNNaker).</div></div>
+        <div class="h-cell"><div class="h-cell-content">NVDA long, custom ASIC plays (Groq, Tenstorrent), quantization toolchain software.</div></div>
+        <div class="h-cell"><div class="h-cell-content amber">Medium</div></div>
+      </div>
+      <div class="horizon-row">
+        <div class="h-cell"><div class="h-cell-content cyan">2–5 yr</div></div>
+        <div class="h-cell"><div class="h-cell-content">Flash/PCM analog inference chips. First neuromorphic robotics integrations. Event camera proliferation. SNN frameworks maturing.</div></div>
+        <div class="h-cell"><div class="h-cell-content">Mythic AI (if Series C+), Intel Loihi ecosystem, event camera cos. (Prophesee, iniVation). Robotics sensor fusion stack.</div></div>
+        <div class="h-cell"><div class="h-cell-content amber">Med–High</div></div>
+      </div>
+      <div class="horizon-row">
+        <div class="h-cell"><div class="h-cell-content cyan">5–10 yr</div></div>
+        <div class="h-cell"><div class="h-cell-content">Memristor crossbar integration in advanced nodes. On-chip analog learning. Full analog inference + partial training.</div></div>
+        <div class="h-cell"><div class="h-cell-content">TSMC/Samsung process node plays, new entrants with memristor IP, platform cos. that own the embodied AI edge stack.</div></div>
+        <div class="h-cell"><div class="h-cell-content red">High</div></div>
+      </div>
+      <div class="horizon-row">
+        <div class="h-cell"><div class="h-cell-content cyan">10+ yr</div></div>
+        <div class="h-cell"><div class="h-cell-content">Analog-native training algorithms. Post-backprop learning. Fully neuromorphic pipeline from sensor to actuator.</div></div>
+        <div class="h-cell"><div class="h-cell-content">Speculative. Whoever cracks analog learning rules owns the paradigm shift. Likely to emerge from academic spinouts.</div></div>
+        <div class="h-cell"><div class="h-cell-content red">Very High</div></div>
+      </div>
+    </div>
+
+    <div class="two-col reveal" style="margin-top:3rem;">
+      <div>
+        <h3>Structural Signals to Watch</h3>
+        <table class="signal-table">
+          <thead><tr><th>Signal</th><th>Interpretation</th><th>Bias</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Quantization research hitting 1-bit</td>
+              <td>Analog precision budget becomes feasible</td>
+              <td class="dot-bull">▲ Bull</td>
+            </tr>
+            <tr>
+              <td>Robot fleet deployments scaling</td>
+              <td>Energy constraint becomes economically acute</td>
+              <td class="dot-bull">▲ Bull</td>
+            </tr>
+            <tr>
+              <td>Digital GPU TOPS/W stalling (Dennard end)</td>
+              <td>Removes incumbent advantage trajectory</td>
+              <td class="dot-bull">▲ Bull</td>
+            </tr>
+            <tr>
+              <td>Memristor device lifetime / write endurance</td>
+              <td>Key unsolved materials science problem</td>
+              <td class="dot-bear">▼ Risk</td>
+            </tr>
+            <tr>
+              <td>Backprop alternatives in academic lit</td>
+              <td>Leading indicator for on-chip learning</td>
+              <td class="dot-neut">◆ Watch</td>
+            </tr>
+            <tr>
+              <td>TSMC analog process node announcements</td>
+              <td>Foundry commitment = capital seriousness</td>
+              <td class="dot-bull">▲ Bull</td>
+            </tr>
+            <tr>
+              <td>Startup consolidation / acqui-hires</td>
+              <td>Big cos. buying IP vs. internal dev</td>
+              <td class="dot-neut">◆ Watch</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Adjacent Investment Angles</h3>
+        <p style="font-size:0.9rem;">For investors who cannot directly access pre-commercial chip startups, the surrounding ecosystem offers exposure:</p>
+        <div class="callout">
+          <div class="callout-label">Event Camera Companies</div>
+          <p><strong>Prophesee (FR)</strong> and <strong>iniVation (CH)</strong> build DVS (dynamic vision sensor) cameras whose native output is spike trains. As neuromorphic inference matures, these are the natural sensor pairing. Currently private; watch for Series C+ or strategic acquisition.</p>
+        </div>
+        <div class="callout" style="margin-top:1rem;">
+          <div class="callout-label">Robotic Systems Integrators</div>
+          <p>Companies deploying at scale (Boston Dynamics, Figure, Agility Robotics) will eventually need to solve the onboard compute energy problem. The chip supplier that wins their platform certification wins a multi-decade supply chain position.</p>
+        </div>
+        <div class="callout" style="margin-top:1rem;">
+          <div class="callout-label">EDA / Simulation Toolchains</div>
+          <p>Analog AI chips require new design automation tools — mixed-signal EDA that handles memristor device models, noise simulation, drift compensation. Cadence and Synopsys are the incumbents but the design rules are new enough to create openings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RISKS -->
+<section id="risks">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">05</div>
+      <div class="section-titles">
+        <div class="section-label">Risk Matrix</div>
+        <h2>What Could <span class="hl">Go Wrong</span></h2>
+      </div>
+    </div>
+
+    <div class="risk-grid reveal">
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">⚡</div>
+          <div class="risk-title">Digital Efficiency Keeps Winning</div>
+          <div class="risk-severity sev-med">Medium</div>
+        </div>
+        <p class="risk-desc">If digital quantization + sparsity + next-gen process nodes (1nm era) extend GPU TOPS/W faster than expected, the analog efficiency advantage narrows or disappears for the mainstream use case. Analog becomes a niche (ultra-low power IoT) rather than the dominant inference substrate. Intel's Gaudi, Groq, and Tenstorrent are all digital and already competitive on efficiency metrics.</p>
+      </div>
+
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">🧪</div>
+          <div class="risk-title">Memristor Materials Science</div>
+          <div class="risk-severity sev-high">High</div>
+        </div>
+        <p class="risk-desc">Memristors have been "5 years away from production" for 15 years. Write endurance, retention time, device-to-device variability, and integration with CMOS back-end-of-line processes remain genuinely hard problems. HP's ReRAM program stalled. If memristors don't integrate cleanly into a sub-5nm node, the long-term crossbar architecture case weakens substantially.</p>
+      </div>
+
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">🔄</div>
+          <div class="risk-title">Training/Inference Gap Persists</div>
+          <div class="risk-severity sev-med">Medium</div>
+        </div>
+        <p class="risk-desc">If analog-native training algorithms do not emerge, the workflow remains: train digitally → compress → deploy to analog fabric. This creates ongoing dependency on digital training infrastructure and limits the efficiency gain to inference only. For data center workloads where retraining is frequent, this may be acceptable. For continual learning in robots, it is a serious limitation.</p>
+      </div>
+
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">📐</div>
+          <div class="risk-title">Architecture Mismatch — Transformers</div>
+          <div class="risk-severity sev-high">High</div>
+        </div>
+        <p class="risk-desc">The current dominant architecture — the transformer — relies heavily on attention mechanisms (softmax, QKV similarity). These are harder to implement efficiently in analog than the convolutions and dense layers that analog crossbars were originally designed for. If transformers remain dominant in robotics perception (ViTs, etc.), the analog advantage in the operator mix may be smaller than expected.</p>
+      </div>
+
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">🏭</div>
+          <div class="risk-title">Foundry Access and Cost</div>
+          <div class="risk-severity sev-med">Medium</div>
+        </div>
+        <p class="risk-desc">Custom analog process flows (non-standard device layers for memristors, PCM, etc.) require foundry cooperation and non-trivial NRE costs. TSMC's willingness to support exotic back-end additions for small-volume customers is limited. This creates a structural advantage for large incumbent players (IBM, Intel) who can fund the process development — and a barrier for startups.</p>
+      </div>
+
+      <div class="risk-cell">
+        <div class="risk-cell-header">
+          <div class="risk-icon">📦</div>
+          <div class="risk-title">Programmer Ecosystem Moat</div>
+          <div class="risk-severity sev-low">Low–Med</div>
+        </div>
+        <p class="risk-desc">CUDA's 15-year head start means ML engineers think in CUDA. Neuromorphic and analog chips require entirely different programming models (spike coding, conductance maps, stochastic weight updates). SpiNNaker 2's PyTorch compatibility is an attempt to bridge this. Whoever cracks the software abstraction layer — making analog silicon feel like GPU programming — wins the developer moat race.</p>
+      </div>
+    </div>
+
+    <div class="mono-quote reveal" style="margin-top:2.5rem;">
+      <p>// Bottom line: the physics argues for analog. The engineering argues for patience. The robotics deployment wave argues for urgency. The right portfolio position is early-stage bets in the 2–5 year window, with the understanding that the 10-year payoff is potentially paradigm-defining — and that the losers will be those who moved too late and found the foundry relationships already locked.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <div class="footer-series">DEEP COMPUTE SERIES · PART 1 / N</div>
+      <p class="footer-disclaimer">This document is for informational and analytical purposes only. It does not constitute financial advice, investment recommendations, or solicitation. All company data is sourced from public information. Timelines and projections are the author's interpretations and subject to significant uncertainty.</p>
+    </div>
+    <div class="footer-right">
+      <div>Part 1 — Analog Neural Compute</div>
+      <div>Part 2 — Spiking Neural Networks (deep dive)</div>
+      <div>Part 3 — Event Cameras + Sensor Fusion</div>
+      <div>Part 4 — The Robotic Inference Stack</div>
+      <div style="margin-top:0.5rem;" class="next">↓ Part 2 coming next</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Scroll reveal
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>

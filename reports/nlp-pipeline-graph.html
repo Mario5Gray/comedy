@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLP Pipeline — Dependency Graph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0c0f;
+    --surface:   #10141a;
+    --border:    #1e2530;
+    --border-hi: #2e3d52;
+    --text:      #c8d4e0;
+    --text-dim:  #5a6a7e;
+    --text-faint:#2e3d52;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+
+    --c-input:   #00e5ff;
+    --c-nlp:     #4fc3f7;
+    --c-coref:   #81c784;
+    --c-embed:   #ffb74d;
+    --c-class:   #ce93d8;
+    --c-cluster: #f48fb1;
+    --c-out:     #a5d6a7;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ── */
+  header {
+    max-width: 860px;
+    margin: 0 auto 56px;
+    border-left: 2px solid var(--border-hi);
+    padding-left: 20px;
+  }
+  header .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  header h1 {
+    font-family: var(--mono);
+    font-size: clamp(18px, 3vw, 26px);
+    font-weight: 500;
+    color: #e8f0f8;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+  }
+  header p {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-dim);
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  /* ── Pipeline layout ── */
+  .pipeline {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Node card ── */
+  .node {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    transition: border-color .2s;
+  }
+  .node:hover { border-color: var(--border-hi); }
+
+  .node-inner {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0 32px;
+  }
+
+  /* left col */
+  .node-left { border-right: 1px solid var(--border); padding-right: 28px; }
+
+  .node-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: .7;
+  }
+  .node-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+  .node-version {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .node-purpose {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .node-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 2px 6px;
+    opacity: .55;
+  }
+
+  /* right col */
+  .node-right { padding-left: 4px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .desc {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .alts {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .alts strong {
+    font-family: var(--mono);
+    font-weight: 500;
+    color: #8899aa;
+  }
+
+  /* ── Connector ── */
+  .connector {
+    display: flex;
+    align-items: stretch;
+    padding: 0 28px;
+    min-height: 52px;
+    position: relative;
+  }
+  .connector-line {
+    width: 1px;
+    background: linear-gradient(to bottom, var(--border-hi), var(--border));
+    margin-left: 32px; /* align with left col centre */
+    flex-shrink: 0;
+  }
+  .connector-label {
+    align-self: center;
+    margin-left: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: .05em;
+    max-width: 560px;
+    line-height: 1.5;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--border-hi);
+    background: rgba(255,255,255,.015);
+    border-radius: 0 4px 4px 0;
+  }
+  .connector-arrow {
+    position: absolute;
+    left: calc(28px + 32px);
+    bottom: 2px;
+    transform: translateX(-50%);
+    color: var(--border-hi);
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  /* ── Colour accents per node ── */
+  .accent-input  { --accent: var(--c-input); }
+  .accent-nlp    { --accent: var(--c-nlp); }
+  .accent-coref  { --accent: var(--c-coref); }
+  .accent-embed  { --accent: var(--c-embed); }
+  .accent-class  { --accent: var(--c-class); }
+  .accent-cluster{ --accent: var(--c-cluster); }
+  .accent-out    { --accent: var(--c-out); }
+
+  .node { border-left: 3px solid var(--accent, var(--border)); }
+  .node-tag  { color: var(--accent, var(--text-dim)); }
+  .node-name { color: var(--accent, var(--text)); }
+  .node-badge { color: var(--accent, var(--text-dim)); border-color: var(--accent, var(--text-dim)); }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .node-inner { grid-template-columns: 1fr; }
+    .node-left { border-right: none; border-bottom: 1px solid var(--border); padding-right: 0; padding-bottom: 16px; margin-bottom: 16px; }
+  }
+
+  /* ── Scanline grain overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.04) 2px,
+      rgba(0,0,0,.04) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">pipeline / dependency graph</div>
+  <h1>NLP Semantic Processing Stack</h1>
+  <p>Domain detection · Co-reference resolution · Plotline threading.<br>
+  Each node: what it is, what it does, where it fits, what else could sit there, and how it hands off to the next stage.</p>
+</header>
+
+<div class="pipeline">
+
+  <!-- ── NODE 0: Raw Text ── -->
+  <div class="node accent-input">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 00 · Input</div>
+        <div class="node-name">Raw Text</div>
+        <div class="node-version">str / List[str]</div>
+        <div class="node-purpose">Entry point. Unstructured natural language — paragraphs, short stories, agent outputs, documents.</div>
+        <div class="node-badge">deterministic</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Plain unicode string. No assumptions about structure. Could be a sentence, a paragraph, or a full document. The entire downstream pipeline is conditioned on what arrives here.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Source. Everything downstream is a transformation of this.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>PDF/DOCX</strong> — needs extraction layer first (pdfplumber, docx2txt). <strong>HTML</strong> — needs stripping (BeautifulSoup). <strong>Streaming tokens</strong> — requires buffering to sentence boundary before passing forward.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">raw string passed to spaCy's <code>nlp(text)</code> — produces a Doc object with token-level annotations</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 1: spaCy ── -->
+  <div class="node accent-nlp">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 01 · Foundation NLP</div>
+        <div class="node-name">spaCy</div>
+        <div class="node-version">en_core_web_trf · v3.x</div>
+        <div class="node-purpose">Tokenization, sentence segmentation, POS tagging, dependency parsing, and named entity recognition in a single pass.</div>
+        <div class="node-badge">PyTorch · transformer backbone</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Industrial-grade NLP library. The <code>trf</code> model uses a RoBERTa backbone for NER and parsing. Produces a <code>Doc</code> object — every token has span, POS, dep-head, and entity label attached. This is the shared data structure that all downstream components read from.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">Entity extraction (PERSON, GPE, ORG), sentence boundary detection, syntactic structure. The <code>PERSON</code> spans become the character roster for thread tracking.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">First real processing stage. Every other component depends on its output — either directly reading the <code>Doc</code> spans, or consuming the sentence list it produces.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>flair</strong> — higher NER accuracy on literary/fiction text specifically; slower, no dep-parse. <strong>stanza</strong> — Stanford NLP, strong multilingual support. <strong>NLTK</strong> — older, no transformer backbone, lower accuracy, fine for toy use. <strong>CoreNLP</strong> — Java-based Stanford tool; excellent but heavy.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">Doc object (token spans + PERSON entities) → FastCoref reads span offsets directly from the spaCy Doc</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 2: FastCoref ── -->
+  <div class="node accent-coref">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 02 · Co-reference</div>
+        <div class="node-name">FastCoref</div>
+        <div class="node-version">LingMess / FCoref · 2023</div>
+        <div class="node-purpose">Resolves pronoun and noun-phrase chains back to their canonical referent. Tells you that "she", "the detective", and "Elena" are the same entity.</div>
+        <div class="node-badge">PyTorch · span-based</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Span-based co-reference model. Returns clusters: each cluster is a list of text spans that refer to the same entity. Two models available — <code>FCoref</code> (fast, less accurate) and <code>LingMess</code> (slow, state-of-the-art). For plotline tracking, LingMess is worth the cost.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">Without this, thread assignment fails the moment a character is referred to by pronoun. This is the hardest deterministic gap to bridge — this model fills it.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Runs after spaCy, enriches the character map. Output feeds into the thread assignment engine: each sentence's entity mentions are resolved to canonical names before assignment.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>coreferee</strong> — spaCy-native, maintained successor to neuralcoref; easier integration, lower accuracy. <strong>neuralcoref</strong> — abandoned, still functional on older spaCy. <strong>AllenNLP coref</strong> — strong accuracy, heavy dependency footprint. <strong>OntoNotes-fine-tuned BERT</strong> — custom HuggingFace model, needs more setup.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">resolved entity clusters → each sentence now carries a canonical character_set → sentences passed to sentence-transformers as plain strings</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 3: Sentence Transformers ── -->
+  <div class="node accent-embed">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 03 · Embeddings</div>
+        <div class="node-name">sentence-transformers</div>
+        <div class="node-version">all-MiniLM-L6-v2 · SBERT</div>
+        <div class="node-purpose">Encodes each sentence into a dense vector that captures semantic meaning. Sentences about the same topic or character cluster together in embedding space.</div>
+        <div class="node-badge">PyTorch · bi-encoder</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Siamese BERT network fine-tuned for semantic similarity. <code>all-MiniLM-L6-v2</code> is 80MB, 6 layers, runs on CPU at useful speed. Produces 384-dim vectors. Cosine similarity between vectors = semantic closeness. This is the backbone of thread continuity detection.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">Two things: (1) measure semantic drift between sentences to detect thread shifts, (2) provide vectors for domain classification when passed to the zero-shot classifier.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Central hub. Embeddings flow both to the thread clustering stage and can be reused by the domain classifier as query vectors. One encode pass, two consumers.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>all-mpnet-base-v2</strong> — higher accuracy, slower, 420MB. <strong>paraphrase-MiniLM-L3-v2</strong> — even smaller/faster, lower quality. <strong>OpenAI text-embedding-3-small</strong> — API call, excellent quality, not local. <strong>Cohere embed</strong> — API, strong multilingual. <strong>nomic-embed-text</strong> — strong local option, Apache 2.0.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">384-dim float32 vectors → splits into two parallel paths: (A) cosine sim matrix → clustering, (B) vectors + raw text → zero-shot classifier</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 4: BART MNLI ── -->
+  <div class="node accent-class">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 04A · Classification</div>
+        <div class="node-name">bart-large-mnli</div>
+        <div class="node-version">facebook/bart-large-mnli</div>
+        <div class="node-purpose">Zero-shot domain labelling. Classifies any paragraph against arbitrary labels — "technology", "finance", "romance" — without any training data.</div>
+        <div class="node-badge">PyTorch · NLI-based</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Natural Language Inference model repurposed as a classifier. For each candidate label, it scores the entailment probability of "This text is about [label]". No fine-tuning required. Returns a ranked list of labels with confidence scores. ~1.6GB model.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">Answers "is this paragraph in the tech domain?" with a confidence score. Can handle multi-label classification — a paragraph can score 0.82 on "technology" and 0.61 on "finance" simultaneously.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Parallel branch from the embedding stage. Receives the raw sentence text (not the vector — BART has its own encoder). Outputs domain labels that tag each sentence/paragraph before final aggregation.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>SetFit</strong> — few-shot fine-tuning on sentence-transformers; 8–20 labelled examples, much faster inference, better accuracy once you have signal. <strong>deberta-v3-large-zeroshot</strong> — stronger NLI backbone, better zero-shot. <strong>GPT-4o via API</strong> — overkill for this task but near-perfect. <strong>KeyBERT</strong> — keyword extraction as a proxy for domain; deterministic-ish.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">domain label + confidence per sentence → merged with character_set and embedding vector into a unified sentence record</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 5: Thread Clustering ── -->
+  <div class="node accent-cluster">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 04B · Threading</div>
+        <div class="node-name">Cosine Sim Clustering</div>
+        <div class="node-version">scipy / numpy · custom</div>
+        <div class="node-purpose">Groups sentences into coherent plotlines using semantic similarity + character co-occurrence. Produces a thread_id per sentence.</div>
+        <div class="node-badge">deterministic · no model</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Builds a sentence × sentence cosine similarity matrix from the SBERT embeddings. Combines this with the character_set from FastCoref — sentences sharing a character AND high semantic similarity are strong thread candidates. Agglomerative clustering groups them. Temporal/spatial shift markers (detected by regex in the deterministic pre-pass) act as hard thread-break signals.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">The actual plotline detector. Answers "which sentences belong to thread A, B, or C?" Each sentence receives a <code>thread_id</code>. This is the core deliverable for short-story analysis.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Parallel branch from embeddings, merges with co-reference output. Final consumer before aggregation.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>HDBSCAN</strong> — density clustering, better with variable thread sizes, no need to specify N clusters. <strong>KMeans</strong> — requires knowing thread count upfront, fast. <strong>TextTiling</strong> — classic NLP algorithm for topic segmentation, fully deterministic, lower accuracy. <strong>BERTopic</strong> — topic modelling over embeddings, outputs topic labels rather than thread IDs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">thread_id + domain_label + character_set per sentence → merged into unified sentence records → passed to deterministic post-validator</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 6: Post Validation ── -->
+  <div class="node accent-out">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 05 · Validation</div>
+        <div class="node-name">Deterministic<br>Post-Validator</div>
+        <div class="node-version">custom · rule-based</div>
+        <div class="node-purpose">Sanity-checks model outputs against structural rules. Catches hallucinated threads, orphaned characters, and domain label inconsistencies.</div>
+        <div class="node-badge">deterministic · auditable</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Description</div>
+        <div class="desc">Rule-based validation layer. Checks: (1) thread count is stable — no thread appears for one sentence then vanishes. (2) Characters don't teleport — same character in two threads simultaneously signals a co-reference error. (3) Domain labels are locally consistent — a single sentence labelled "tech" inside 8 "romance" sentences is likely a false positive. Applies majority-window smoothing.</div>
+        <div class="section-label">Purpose</div>
+        <div class="desc">The "human at the edge" checkpoint. Flags anomalies as warnings rather than silently passing bad data downstream. Produces a clean, validated <code>List[SentenceRecord]</code>.</div>
+        <div class="section-label">Where it fits</div>
+        <div class="desc">Final stage before output. Enforces the invariants you'd check by hand. Outputs can be serialised to JSON for agent consumption or rendered as annotated text.</div>
+        <div class="section-label">Alternatives</div>
+        <div class="alts"><strong>Pydantic validation</strong> — schema-level checks on the output structure. <strong>Great Expectations</strong> — data quality framework, overkill but powerful for production. <strong>Custom unit tests</strong> — pytest fixtures on known paragraph fixtures with expected thread/domain outputs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">List[SentenceRecord] → {text, thread_id, domain_labels, characters, confidence} → serialised output</div>
+    <div class="connector-arrow">▼</div>
+  </div>
+
+  <!-- ── NODE 7: Output ── -->
+  <div class="node accent-input" style="--accent: #00e5ff44; border-left-color: #00e5ff44;">
+    <div class="node-inner">
+      <div class="node-left">
+        <div class="node-tag">Stage 06 · Output</div>
+        <div class="node-name">Structured Output</div>
+        <div class="node-version">JSON / annotated text</div>
+        <div class="node-purpose">Per-sentence records with thread ID, domain label, resolved characters, and confidence scores. Machine-readable. Agent-ready.</div>
+        <div class="node-badge">deterministic</div>
+      </div>
+      <div class="node-right">
+        <div class="section-label">Schema</div>
+        <div class="desc" style="font-family: var(--mono); font-size: 11.5px; color: #7eb8d4; line-height: 1.8; background: rgba(0,229,255,.03); padding: 12px 14px; border-radius: 4px; border: 1px solid var(--border);">
+{<br>
+&nbsp;&nbsp;"sentences": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"text":         "str",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"thread_id":    "int",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"domain":       "[{label, score}]",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"characters":   "[canonical_name]",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"flags":        "[warning_str]"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;]<br>
+}
+        </div>
+        <div class="section-label">Consumers</div>
+        <div class="alts">Downstream agents, summarizer pipeline (AGENT-SUM), retrieval systems, human review interfaces, evaluation harnesses.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
