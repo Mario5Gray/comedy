@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multimodal Personality Pipeline Report</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #131a2e;
+      --panel-2: #1a2340;
+      --text: #e8ecf8;
+      --muted: #aab4d1;
+      --accent: #7cc4ff;
+      --accent-2: #9b8cff;
+      --border: #2b365d;
+      --good: #8ee6a3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #0d1328 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    .hero {
+      padding: 28px 28px 22px;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at top right, rgba(124,196,255,0.12), transparent 28%),
+                  radial-gradient(circle at top left, rgba(155,140,255,0.12), transparent 24%),
+                  var(--panel);
+      border-radius: 20px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+    }
+    h1,h2,h3 { margin: 0 0 12px; line-height: 1.15; }
+    h1 { font-size: 2.2rem; letter-spacing: -0.03em; }
+    h2 { font-size: 1.3rem; color: #f4f7ff; }
+    h3 { font-size: 1rem; color: #f4f7ff; }
+    p { margin: 0 0 14px; color: var(--muted); }
+    .lede {
+      font-size: 1.05rem;
+      max-width: 830px;
+    }
+    .meta {
+      margin-top: 14px;
+      display: inline-block;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 0.92rem;
+    }
+    .section {
+      margin-top: 26px;
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(124,196,255,0.12);
+      border: 1px solid rgba(124,196,255,0.35);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+    }
+    ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+      color: var(--muted);
+    }
+    li { margin: 6px 0; }
+    .quote {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-left: 3px solid var(--accent-2);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      color: #d7def6;
+    }
+    .mini {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    .pillrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: #dbe5ff;
+      font-size: 0.88rem;
+    }
+    .diagram {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      color: #dce5ff;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92rem;
+    }
+    .footer {
+      margin-top: 28px;
+      padding: 18px 22px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(142,230,163,0.06), rgba(142,230,163,0.02));
+    }
+    .footer strong { color: var(--good); }
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 1.8rem; }
+      .wrap { padding: 24px 16px 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>HTML Report: Multimodal Personality Pipeline Objective</h1>
+      <p class="lede">
+        This report reframes the objective as a coordinated system design problem. The goal is not to train isolated models in parallel, but to orchestrate coherent multimodal behavior across language and image systems through shared attributes, structured handoff, and authoritative world-state control.
+      </p>
+      <div class="meta">Scope: personality-driven multimodal orchestration · LLM + SDXL style stack</div>
+      <div class="quote">
+        The system should not merely generate outputs. It should preserve character, emotional continuity, visual identity, and interaction logic across time.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Executive Summary</h2>
+      <p>
+        The pipeline is organized around behavior rather than raw model capability. We define desired classes of behavior, discover the attributes that make those behaviors legible, shape data into functional lanes, and establish a structured coordination format between models. Training or adaptation then becomes one instrument within a larger system. Snapshots capture the whole coordinated state, including models, parameters, world assumptions, and evaluation criteria.
+      </p>
+      <div class="pillrow">
+        <div class="pill">Emotional consistency</div>
+        <div class="pill">Visual identity</div>
+        <div class="pill">Scene adaptation</div>
+        <div class="pill">Cross-model handoff</div>
+        <div class="pill">World-state continuity</div>
+        <div class="pill">Snapshot governance</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Pipeline Stages</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="step">1</div>
+          <h3>Intent Definition</h3>
+          <p>Define broad behavioral classes the system must express reliably.</p>
+          <ul>
+            <li>Emotional consistency across turns</li>
+            <li>Stable visual identity and motif retention</li>
+            <li>Adaptive scene behavior and thematic continuity</li>
+            <li>Character persistence in changing contexts</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">2</div>
+          <h3>Attribute Discovery</h3>
+          <p>Break personality concepts into concrete, steerable dimensions.</p>
+          <ul>
+            <li>Speech rhythm, narrative stance, reaction style</li>
+            <li>Visual motifs, silhouette markers, color anchors</li>
+            <li>Social role, emotional range, behavioral signatures</li>
+            <li>Example: “nervous canary” becomes pose, tone, motive, and symbol set</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">3</div>
+          <h3>Data Lane Definition</h3>
+          <p>Organize datasets by function rather than source alone.</p>
+          <ul>
+            <li>Personality-driven data: enduring traits and expressive signature</li>
+            <li>Scenario-driven data: situational adaptation and event logic</li>
+            <li>Coordination-driven data: one model producing useful conditions for another</li>
+            <li>Continuity-driven data: persistence across sessions or scenes</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">4</div>
+          <h3>Data Shaping</h3>
+          <p>Annotate raw materials with the exact attributes the system must learn or expose.</p>
+          <ul>
+            <li>Emotional tone, narrative style, visual perspective</li>
+            <li>Character intent, scene constraints, symbolic objects</li>
+            <li>Missing-signal discovery to reveal what must be synthesized later</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">5</div>
+          <h3>Coordination Format</h3>
+          <p>Define a structured language between models.</p>
+          <ul>
+            <li>LLM emits distilled scene state, emotion, intent, and visual constraints</li>
+            <li>Visual model receives concise, actionable rendering guidance</li>
+            <li>The handoff is structured, not merely prose-heavy</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">6</div>
+          <h3>Training & Adaptation</h3>
+          <p>Choose the lightest mechanism that produces coordinated behavior.</p>
+          <ul>
+            <li>Fine-tuning, adapters, LoRA, prompt steering, retrieval, or policy rules</li>
+            <li>Use training where it adds durable value, orchestration where it is enough</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">7</div>
+          <h3>Snapshots & Evaluation</h3>
+          <p>A snapshot is a coordinated checkpoint of the entire system.</p>
+          <ul>
+            <li>Model versions, adapters, prompts, parameters, and routing logic</li>
+            <li>World assumptions and evaluation expectations</li>
+            <li>Repeatable behavioral baselines for comparison</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="step">8</div>
+          <h3>World-State Governance</h3>
+          <p>Maintain a central authoritative state that models can suggest updates to.</p>
+          <ul>
+            <li>Canonical state is owned by the system, not by any single model</li>
+            <li>Models propose changes; policy merges, rejects, or scores them</li>
+            <li>This preserves coherence and reproducibility</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Dataset Orientation</h2>
+      <p>
+        The initial question is not “what exact dataset do we need?” but “what function must each dataset serve?” This changes sourcing and curation strategy.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Personality-Driven Sets</h3>
+          <p class="mini">Objective: teach enduring identity, voice, affect, and recurring expressive behavior.</p>
+        </div>
+        <div class="card">
+          <h3>Scenario-Driven Sets</h3>
+          <p class="mini">Objective: teach adaptation to context, events, tasks, and scene logic.</p>
+        </div>
+        <div class="card">
+          <h3>Coordination Sets</h3>
+          <p class="mini">Objective: teach one model how to produce outputs another model can act on.</p>
+        </div>
+        <div class="card">
+          <h3>Continuity Sets</h3>
+          <p class="mini">Objective: teach memory, persistence, and consistency over multiple interactions.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Snapshot Definition</h2>
+      <p>
+        A snapshot should be treated as more than a saved checkpoint. It is a versioned capture of system behavior at a moment in development.
+      </p>
+      <div class="diagram">SNAPSHOT =
+  active models
++ attached adapters or fine-tunes
++ personality parameter schema
++ canonical world-state assumptions
++ coordination templates / routing rules
++ dataset slices used for shaping
++ evaluation criteria / expected behavior</div>
+      <p class="mini">
+        This makes the snapshot reproducible as a behavior package, not merely as a file artifact.
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>World-State Model</h2>
+      <p>
+        World-state should remain external to any one model. The system owns it, and models receive a filtered view of it appropriate to their task.
+      </p>
+      <ul>
+        <li>Active setting and scenario context</li>
+        <li>Known entities and relationships</li>
+        <li>Current emotional and narrative conditions</li>
+        <li>Persistent personality traits</li>
+        <li>User interaction effects</li>
+        <li>Visual constraints and unresolved tensions</li>
+      </ul>
+      <div class="quote">
+        Recommended rule: models may contribute proposed updates, but only the controller may commit canonical state.
+      </div>
+    </div>
+
+    <div class="footer">
+      <strong>Outcome:</strong> This objective defines a pipeline that curates data by function, aligns models through structured handoff, and evaluates the whole system against coherent behavioral goals. The result is a governed multimodal stack, not a collection of loosely related model calls.
+    </div>
+  </div>
+</body>
+</html>
