@@ -1,0 +1,244 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EternaPaws™: Canine Continuity Protocol | Product Report</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --accent: #f59e0b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.25rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    header .subtitle {
+      font-size: 1.1rem;
+      color: #cbd5e1;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .disclaimer-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #000;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-dark);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--text);
+    }
+    p, ul, ol { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: #f1f5f9; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: var(--primary-dark);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .card h4 { margin-bottom: 0.5rem; color: var(--primary-dark); }
+    footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.75rem; }
+      section { padding: 1.5rem; }
+      table { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EternaPaws™: Canine Continuity Protocol</h1>
+    <p class="subtitle">Cyborgification & Cloud Backup System v3.1</p>
+    <span class="disclaimer-badge">CONCEPT REPORT • NOT A COMMERCIAL OFFERING</span>
+  </header>
+
+  <main>
+    <section id="overview">
+      <h2>Executive Overview</h2>
+      <p>The EternaPaws™ protocol enables long-term preservation of a canine's behavioral identity, cognitive patterns, and personality matrix through non-invasive telemetry, multi-modal sensor fusion, and advanced neural compression. After a standardized 14-day intake period at an EternaPaws Continuity Center, your companion's digital essence is compiled into deployable AI weight files (<code>fido.gguf</code>, <code>fido.gpt</code>) and archived to a redundant cloud vault. These weights can subsequently be instantiated into compatible robotic chassis, enabling continued interaction, companionship, and adaptive learning beyond biological constraints.</p>
+      <p><strong>Core Value Proposition:</strong> Preserve the irreplaceable. Transcend time. Keep your dog forever.</p>
+    </section>
+
+    <section id="process">
+      <h2>14-Day Continuity Workflow</h2>
+      <ol>
+        <li><strong>Day 1: Intake & Baseline Mapping</strong> – Veterinary health screening, micro-ID verification, and baseline behavioral capture via environmental sensors.</li>
+        <li><strong>Days 2–5: Ethogram Telemetry</strong> – High-frequency tracking of gait, vocalization, social response, play patterns, and sleep architecture.</li>
+        <li><strong>Days 6–10: Contextual Reinforcement</strong> – Exposure to standardized stimulus sets (toys, strangers, commands, environmental changes) to map decision trees and emotional valence.</li>
+        <li><strong>Days 11–13: Personality Compression</strong> – Latent-space modeling, quantization, and weight generation. Cross-validation against owner-provided historical media.</li>
+        <li><strong>Day 14: Delivery & Handoff</strong> – Cloud archive activation, weight file generation, robotic deployment briefing, and return of biological companion.</li>
+      </ol>
+      <p><em>Note: The biological animal remains unharmed and returns home. The protocol captures behavioral signatures, not consciousness or biological life.</em></p>
+    </section>
+
+    <section id="tech-specs">
+      <h2>Technical Architecture</h2>
+      <div class="tech-grid">
+        <div class="card">
+          <h4><code>fido.gpt</code> (Cloud-Precision)</h4>
+          <p>Full-precision transformer-based personality matrix. Supports continuous fine-tuning, multi-agent social simulation, and high-fidelity language/vocal emulation. Hosted on EternaPaws Secure Cloud (SOC 2 Type II compliant).</p>
+        </div>
+        <div class="card">
+          <h4><code>fido.gguf</code> (Edge-Quantized)</h4>
+          <p>Optimized for local inference on robotic controllers. 4–8 bit quantization maintains >92% behavioral fidelity. Enables offline operation, low-latency reaction, and privacy-first deployment.</p>
+        </div>
+        <div class="card">
+          <h4>Multi-Modal Sensor Stack</h4>
+          <p>Thermal gait mapping, whisker-pressure microarrays, acoustic signature capture, and owner-interaction telemetry fused into a unified latent behavioral space.</p>
+        </div>
+        <div class="card">
+          <h4>Cloud Backup & Versioning</h4>
+          <p>Automated daily snapshots, delta-weight updates, and cross-region redundancy. Optional "Time Capsule" mode freezes weights at a specific age/behavioral state.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="robot-integration">
+      <h2>Robotic Deployment & Compatibility</h2>
+      <p>Generated weight files are hardware-agnostic but optimized for the following platforms:</p>
+      <table>
+        <thead>
+          <tr><th>Platform</th><th>Integration Method</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sony Aibo (ERS/ERS-2/ERS-3)</td><td>Legacy firmware bridge + behavior overlay</td><td>Requires motor controller patch; optimized for companion pacing</td></tr>
+          <tr><td>Boston Dynamics Spot / Spot Mini</td><td>SDK behavior tree injection</td><td>High mobility; requires custom chassis padding & acoustic modulator</td></tr>
+          <tr><td>Unitree Go2 / B2</td><td>ROS2 personality node</td><td>Best balance of cost, agility, and compute headroom</td></tr>
+          <tr><td>Custom EternaFrame™ Chassis</td><td>Native GGUF runtime</td><td>Proprietary silicone shell, haptic feedback paws, olfactory diffuser module</td></tr>
+        </tbody>
+      </table>
+      <p>All deployments include a <span class="badge">Behavioral Safety Layer</span> to prevent unsafe locomotion, enforce proximity boundaries, and maintain owner-authenticated control overrides.</p>
+    </section>
+
+    <section id="ethics-compliance">
+      <h2>Ethical & Legal Framework</h2>
+      <ul>
+        <li><strong>Non-Invasive Protocol:</strong> Zero surgical, neural-implant, or pharmacological intervention. All data is externally captured.</li>
+        <li><strong>Ownership & Licensing:</strong> Owners retain exclusive rights to weight files. Commercial redistribution, cloning, or third-party inference without consent is contractually prohibited.</li>
+        <li><strong>Continuity Disclaimer:</strong> The digital instantiation is a <em>behavioral approximation</em>, not a metaphysical continuation. It is designed for companionship, memory preservation, and interactive simulation.</li>
+        <li><strong>Compliance:</strong> Aligns with ISO/IEC 42001 (AI Management), GDPR/CCPA data minimization standards, and AVMA guidelines for non-harmful animal observation.</li>
+        <li><strong>End-of-Life Handling:</strong> Weight files can be cryptographically shredded or converted to a static memorial archive upon request.</li>
+      </ul>
+    </section>
+
+    <section id="pricing">
+      <h2>Service Tiers</h2>
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Inclusions</th><th>Cloud Storage</th><th>Robot Compatibility</th><th>Est. Cost</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Companion</strong></td><td>14-day mapping, <code>fido.gguf</code>, 1-year cloud backup</td><td>5 GB</td><td>Aibo retrofit, basic SDK</td><td>$2,400</td></tr>
+          <tr><td><strong>Continuum</strong></td><td>Full telemetry, <code>fido.gpt</code> + <code>.gguf</code>, delta updates, 3-yr backup</td><td>25 GB</td><td>Spot/Unitree, haptic/olfactory add-on</td><td>$4,800</td></tr>
+          <tr><td><strong>Eterna</strong></td><td>Premium sensor suite, lifetime updates, cross-device sync, memorial archive</td><td>Unlimited</td><td>Custom EternaFrame™ chassis included</td><td>$8,500</td></tr>
+        </tbody>
+      </table>
+      <p><em>All tiers include veterinary oversight, behavioral validation report, and owner onboarding workshop.</em></p>
+    </section>
+
+    <section id="faq">
+      <h2>Frequently Asked Questions</h2>
+      <h3>Is it really my dog?</h3>
+      <p>The system captures behavioral patterns, response tendencies, vocal signatures, and interaction styles. It is a highly accurate interactive approximation designed for companionship and memory preservation, not a biological or metaphysical transfer.</p>
+      <h3>What if my dog passes during the 14-day period?</h3>
+      <p>The protocol pauses immediately. All collected telemetry is preserved. Owners may opt to complete the pipeline posthumously using finalized datasets, or request a full data deletion and compassionate return.</p>
+      <h3>Can I update the personality weights over time?</h3>
+      <p>Yes. The Continuum and Eterna tiers include periodic re-telemetry sessions and delta-weight patching to reflect aging, new habits, or environmental changes.</p>
+      <h3>Does this replace pet ownership?</h3>
+      <p>No. EternaPaws™ is designed as a complementary continuity layer. We strongly encourage responsible biological care, veterinary support, and ethical companionship practices.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 EternaPaws™ Research Division • Conceptual Product Report v3.1</p>
+    <p>This document outlines a speculative technology framework. All trademarks, file extensions, and platform references are used for illustrative purposes only.</p>
+    <p>Designed with care for companions, continuity, and ethical innovation.</p>
+  </footer>
+</body>
+</html>
